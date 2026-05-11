@@ -1,0 +1,2701 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מדריך Claude Skills — מתחילים לעבוד נכון</title>
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== משתנים גלובליים ===== */
+        :root {
+            --pink-light: #ECBFBB;
+            --pink-antique: #C9A4A0;
+            --gold: #C19200;
+            --black: #000000;
+            --white: #FFFFFF;
+            --glass-bg: rgba(255, 255, 255, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.3);
+            --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+            --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+            --sidebar-width: 240px;
+            --content-max: 740px;
+        }
+
+        /* ===== איפוס ובסיס ===== */
+        *, *::before, *::after {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            direction: rtl;
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Heebo', sans-serif;
+            color: var(--black);
+            background: var(--white);
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4 {
+            font-family: 'Heebo', sans-serif;
+            line-height: 1.3;
+        }
+
+        /* ===== Logo Bar ===== */
+        .logo-bar {
+            width: 100%;
+            background: #c6eee8;
+            padding: 8px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; /* שמאל פיזי */
+            direction: ltr;
+            z-index: 500;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .logo-bar img {
+            height: 80px;
+            width: auto;
+        }
+
+        /* Logo bar בתוך Hero — מוחלט בראש */
+        .hero .logo-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 10;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+        }
+
+        /* Logo bar בתוך App — קבוע בראש */
+        .app-logo-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 500;
+            background: #c6eee8;
+        }
+
+        .completion .logo-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 500;
+        }
+
+        /* ===== Reduced Motion ===== */
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        /* ===== Progress Bar ===== */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: rgba(0, 0, 0, 0.06);
+            z-index: 1000;
+            display: none;
+        }
+
+        .progress-bar.visible {
+            display: block;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pink-antique), var(--gold));
+            transition: width 0.5s var(--ease-out);
+            border-radius: 0 3px 3px 0;
+        }
+
+        /* ===== Hero Section ===== */
+        .hero {
+            position: relative;
+            min-height: 100vh;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            overflow: hidden;
+            /* Fallback רקע אם הסרטון לא נטען */
+            background: linear-gradient(135deg, #f8f0ef 0%, #f5ece4 40%, #f0ead6 100%);
+        }
+
+        .hero-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 0;
+        }
+
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.45);
+            z-index: 1;
+        }
+
+        /* Fade לבן בצדדים — מסתיר את גבולות הסרטון */
+        .hero-side-fade {
+            position: absolute;
+            top: 0;
+            width: 20%;
+            height: 100%;
+            z-index: 2;
+            pointer-events: none;
+        }
+
+        .hero-side-fade.left {
+            left: 0;
+            background: linear-gradient(to right, rgba(198,238,232,1) 0%, rgba(198,238,232,0.9) 40%, rgba(198,238,232,0) 100%);
+        }
+
+        .hero-side-fade.right {
+            right: 0;
+            background: linear-gradient(to left, rgba(198,238,232,1) 0%, rgba(198,238,232,0.9) 40%, rgba(198,238,232,0) 100%);
+        }
+
+        .hero-content {
+            position: absolute;
+            z-index: 3;
+            text-align: center;
+            padding: 2rem 3rem 2.5rem;
+            max-width: 600px;
+            width: 90%;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            /* מיקום עם transform — JS יזיז */
+            left: 50%;
+            top: 12vh;
+            transform: translateX(-50%);
+            transition: top 1.2s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .hero-content h1 {
+            font-family: 'Heebo', sans-serif;
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            color: var(--black);
+        }
+
+        .hero-content p {
+            font-size: clamp(0.95rem, 2vw, 1.1rem);
+            color: #222;
+            margin-bottom: 1.5rem;
+            opacity: 0;
+            transform: translateY(30px);
+            font-weight: 400;
+        }
+
+        .hero-content .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.15rem);
+            color: #222;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .hero-btn {
+            display: inline-block;
+            padding: 16px 48px;
+            background: var(--black);
+            color: var(--white);
+            border: none;
+            border-radius: 50px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 1.15rem;
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: transform 0.2s var(--spring), box-shadow 0.2s ease;
+        }
+
+        .hero-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .hero-btn:active {
+            transform: scale(0.97);
+        }
+
+        /* Hero staggered animation — מתחיל אחרי שהתוכן עולה */
+        .hero.animate .hero-content h1 {
+            animation: staggerUp 0.8s var(--ease-out) 0.5s forwards;
+        }
+        .hero.animate .hero-content p:nth-of-type(1) {
+            animation: staggerUp 0.8s var(--ease-out) 0.7s forwards;
+        }
+        .hero.animate .hero-content p:nth-of-type(2) {
+            animation: staggerUp 0.8s var(--ease-out) 0.9s forwards;
+        }
+        .hero.animate .hero-btn {
+            animation: staggerUp 0.8s var(--ease-out) 1.1s forwards;
+        }
+
+        @keyframes staggerUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ===== App Layout (Steps) ===== */
+        .app {
+            display: none;
+            min-height: 100vh;
+        }
+
+        .app.visible {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .app-body {
+            display: flex;
+            flex: 1;
+            padding-top: 3px; /* מקום ל-progress bar */
+        }
+
+        /* ===== Top Navigation Bar ===== */
+        .top-nav {
+            position: fixed;
+            top: 80px;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            padding: 0;
+            display: none;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .top-nav.visible {
+            display: block;
+        }
+
+        /* סרגל התקדמות */
+        .nav-progress {
+            height: 4px;
+            background: rgba(0, 0, 0, 0.06);
+            width: 100%;
+        }
+
+        .nav-progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--pink-antique), var(--gold));
+            transition: width 0.5s var(--ease-out);
+            border-radius: 0 4px 4px 0;
+        }
+
+        /* שורת הניווט */
+        .nav-steps {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0;
+            padding: 0.2rem 1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .nav-step {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.85rem 1.1rem;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.95rem;
+            color: #aaa;
+            cursor: pointer;
+            border: none;
+            background: none;
+            position: relative;
+            transition: color 0.25s ease;
+            white-space: nowrap;
+        }
+
+        .nav-step:hover {
+            color: #555;
+        }
+
+        .nav-step.active {
+            color: var(--black);
+            font-weight: 700;
+        }
+
+        /* קו תחתון לשלב פעיל */
+        .nav-step::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%) scaleX(0);
+            width: 80%;
+            height: 3px;
+            background: var(--gold);
+            border-radius: 3px;
+            transition: transform 0.3s var(--ease-out);
+        }
+
+        .nav-step.active::after {
+            transform: translateX(-50%) scaleX(1);
+            background: var(--pink-light);
+        }
+
+        .nav-step-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.07);
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+            transition: background 0.25s ease, color 0.25s ease, transform 0.25s ease;
+        }
+
+        .nav-step.active .nav-step-num {
+            background: var(--pink-light);
+            color: var(--black);
+            transform: scale(1.1);
+        }
+
+        .nav-step.completed {
+            color: var(--black);
+        }
+
+        .nav-step.completed .nav-step-num {
+            background: var(--gold);
+            color: var(--white);
+        }
+
+        /* קו מחבר בין שלבים */
+        .nav-step-line {
+            width: 20px;
+            height: 2px;
+            background: rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            border-radius: 1px;
+        }
+
+        /* ===== Main Content ===== */
+        .main-content {
+            flex: 1;
+            padding: 3rem 2rem;
+            padding-top: 10.5rem; /* מקום ל-logo bar + top nav */
+            display: flex;
+            justify-content: center;
+        }
+
+        .step-container {
+            max-width: var(--content-max);
+            width: 100%;
+        }
+
+        .step {
+            display: none;
+            opacity: 0;
+            transform: translateY(15px);
+        }
+
+        .step.active {
+            display: block;
+            animation: fadeSlideIn 0.35s var(--ease-out) forwards;
+        }
+
+        @keyframes fadeSlideIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .step-header {
+            margin-bottom: 2.5rem;
+        }
+
+        .step-number {
+            display: inline-block;
+            font-family: 'Heebo', sans-serif;
+            font-size: 1.05rem;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+
+        .step-title {
+            font-size: clamp(1.8rem, 4vw, 2.5rem);
+            font-weight: 900;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            font-size: 1.1rem;
+            color: #555;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin: 2.5rem 0 1rem;
+        }
+
+        .section-text {
+            font-size: 1rem;
+            color: #333;
+            margin-bottom: 1.5rem;
+        }
+
+        /* ===== Callout Boxes ===== */
+        .callout {
+            padding: 1.25rem 1.5rem;
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .callout-label {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .callout.info {
+            background: rgba(198, 238, 232, 0.3);
+            border-color: rgba(198, 238, 232, 0.5);
+        }
+        .callout.info .callout-label { color: #2a7a6f; }
+
+        .callout.success {
+            background: rgba(198, 238, 232, 0.35);
+            border-color: rgba(198, 238, 232, 0.6);
+        }
+        .callout.success .callout-label { color: #2a7a6f; }
+
+        .callout.warning {
+            background: rgba(254, 243, 199, 0.6);
+            border-color: rgba(252, 211, 77, 0.4);
+        }
+        .callout.warning .callout-label { color: #92400e; }
+
+        .callout.tip {
+            background: rgba(254, 249, 195, 0.6);
+            border-color: rgba(250, 204, 21, 0.4);
+        }
+        .callout.tip .callout-label { color: #854d0e; }
+
+        .callout.recommended {
+            background: rgba(198, 238, 232, 0.35);
+            border-color: rgba(198, 238, 232, 0.6);
+        }
+        .callout.recommended .callout-label { color: #2a7a6f; }
+        .callout.recommended .rec-tag {
+            display: inline-block;
+            background: #2a7a6f;
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 50px;
+            margin-right: 0.5rem;
+        }
+
+        /* ===== Code Blocks ===== */
+        .code-block {
+            position: relative;
+            background: #1a1a2e;
+            border-radius: 12px;
+            padding: 1.25rem 1.5rem;
+            margin: 1rem 0 1.5rem;
+            overflow-x: auto;
+            direction: ltr;
+            text-align: left;
+        }
+
+        .code-block code {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            color: #e2e8f0;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: #94a3b8;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'Heebo', sans-serif;
+            transition: background 0.15s ease;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .copy-btn.copied {
+            background: rgba(198, 238, 232, 0.3);
+            color: #2a7a6f;
+            border-color: rgba(198, 238, 232, 0.5);
+        }
+
+        /* ===== Flip Cards ===== */
+        .flip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .flip-grid.cols-2 {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .flip-card {
+            perspective: 1000px;
+            height: 220px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s ease;
+            transform-style: preserve-3d;
+        }
+
+        .flip-card:hover .flip-card-inner,
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180px);
+        }
+
+        /* RTL — ההיפוך צריך להיות הפוך */
+        .flip-card:hover .flip-card-inner,
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(-180deg);
+        }
+
+        .flip-front, .flip-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .flip-front {
+            background: linear-gradient(135deg, rgba(236, 191, 187, 0.35), rgba(198, 238, 232, 0.3));
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.45);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+        }
+
+        .flip-front .flip-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .flip-front h4 {
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: var(--black);
+        }
+
+        .flip-front p {
+            font-size: 0.95rem;
+            color: #444;
+            line-height: 1.5;
+        }
+
+        .flip-back {
+            transform: rotateY(180deg);
+            background: #2a7a6f;
+            border: none;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+            font-size: 1rem;
+            color: #fff;
+            line-height: 1.7;
+        }
+
+        /* כל כרטיס הפוך בצבע אחר מהפלטה */
+        .flip-card:nth-child(1) .flip-back { background: #8a5a56; } /* ורוד כהה */
+        .flip-card:nth-child(2) .flip-back { background: #2a7a6f; } /* טורקיז כהה */
+        .flip-card:nth-child(3) .flip-back { background: #96780a; } /* זהב כהה */
+        .flip-card:nth-child(4) .flip-back { background: #7a5f5c; } /* חום ענתיק */
+
+        .flip-hint {
+            font-size: 0.75rem;
+            color: #999;
+            margin-top: auto;
+        }
+
+        /* ===== Quiz ===== */
+        .quiz {
+            margin: 2.5rem 0;
+            padding: 2rem;
+            border-radius: 20px;
+            background: linear-gradient(135deg, rgba(236, 191, 187, 0.12), rgba(193, 146, 0, 0.08));
+            border: 1px solid rgba(236, 191, 187, 0.25);
+        }
+
+        .quiz h4 {
+            font-size: 1.15rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .quiz-label {
+            font-size: 0.8rem;
+            color: var(--gold);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .quiz-question {
+            font-size: 1.05rem;
+            margin-bottom: 1.25rem;
+            font-weight: 500;
+        }
+
+        .quiz-option {
+            display: block;
+            width: 100%;
+            text-align: right;
+            padding: 0.85rem 1.25rem;
+            border: 2px solid rgba(0, 0, 0, 0.08);
+            border-radius: 12px;
+            background: var(--white);
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.95rem;
+            cursor: pointer;
+            margin-bottom: 0.6rem;
+            transition: border-color 0.2s ease, transform 0.15s var(--spring), background 0.2s ease;
+        }
+
+        .quiz-option:hover:not(.selected) {
+            border-color: rgba(0, 0, 0, 0.15);
+            transform: translateX(-3px);
+        }
+
+        .quiz-option.correct {
+            border-color: #2a7a6f;
+            background: rgba(198, 238, 232, 0.4);
+            animation: quizPop 0.4s var(--spring);
+        }
+
+        .quiz-option.wrong {
+            border-color: #ef4444;
+            background: rgba(254, 226, 226, 0.5);
+        }
+
+        .quiz-option.selected {
+            pointer-events: none;
+        }
+
+        .quiz-feedback {
+            margin-top: 0.75rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .quiz-feedback.visible {
+            opacity: 1;
+        }
+
+        .quiz-feedback.correct { color: #2a7a6f; }
+        .quiz-feedback.wrong { color: #991b1b; }
+
+        @keyframes quizPop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        /* ===== Accordion / Checklist ===== */
+        .accordion {
+            margin: 1.5rem 0;
+        }
+
+        .accordion-item {
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            margin-bottom: 0.6rem;
+            overflow: hidden;
+            transition: border-color 0.2s ease;
+        }
+
+        .accordion-item:hover {
+            border-color: rgba(0, 0, 0, 0.12);
+        }
+
+        .accordion-header {
+            display: flex;
+            align-items: center;
+            padding: 1rem 1.25rem;
+            cursor: pointer;
+            background: none;
+            border: none;
+            width: 100%;
+            text-align: right;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            gap: 0.75rem;
+            transition: background 0.15s ease;
+        }
+
+        .accordion-header:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        .accordion-arrow {
+            margin-left: auto;
+            transition: transform 0.25s var(--ease-out);
+            font-size: 0.8rem;
+            color: #999;
+        }
+
+        .accordion-item.open .accordion-arrow {
+            transform: rotate(180deg);
+        }
+
+        .accordion-body {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.35s var(--ease-out);
+        }
+
+        .accordion-body-inner {
+            padding: 0 1.25rem 1.25rem;
+            font-size: 0.93rem;
+            color: #444;
+            line-height: 1.7;
+        }
+
+        /* ===== Checklist ===== */
+        .checklist {
+            margin: 1.5rem 0;
+        }
+
+        .check-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+            padding: 0.85rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            border-radius: 12px;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: opacity 0.3s ease, background 0.15s ease;
+        }
+
+        .check-item:hover {
+            background: rgba(0, 0, 0, 0.01);
+        }
+
+        .check-item.checked {
+            opacity: 0.5;
+        }
+
+        .check-box {
+            width: 22px;
+            height: 22px;
+            border: 2px solid rgba(0, 0, 0, 0.15);
+            border-radius: 6px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            margin-top: 2px;
+        }
+
+        .check-item.checked .check-box {
+            background: var(--gold);
+            border-color: var(--gold);
+        }
+
+        .check-box svg {
+            width: 14px;
+            height: 14px;
+            stroke: white;
+            stroke-width: 3;
+            fill: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .check-item.checked .check-box svg {
+            opacity: 1;
+        }
+
+        .check-content strong {
+            display: block;
+            font-size: 0.95rem;
+        }
+
+        .check-content span {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* ===== Timeline ===== */
+        .timeline {
+            position: relative;
+            margin: 2rem 0;
+            padding-right: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--pink-light), var(--gold));
+            border-radius: 3px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 2rem;
+            padding-right: 1.5rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+        }
+
+        .timeline-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .timeline-dot {
+            position: absolute;
+            right: -2.35rem;
+            top: 0.3rem;
+            width: 14px;
+            height: 14px;
+            background: var(--gold);
+            border: 3px solid var(--white);
+            border-radius: 50%;
+            box-shadow: 0 0 0 2px var(--gold);
+        }
+
+        .timeline-step {
+            font-size: 0.8rem;
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        .timeline-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin: 0.25rem 0;
+        }
+
+        .timeline-skill {
+            display: inline-block;
+            font-size: 0.8rem;
+            padding: 2px 10px;
+            background: rgba(193, 146, 0, 0.1);
+            color: var(--gold);
+            border-radius: 50px;
+            font-weight: 600;
+        }
+
+        .timeline-desc {
+            font-size: 0.9rem;
+            color: #555;
+            margin-top: 0.4rem;
+        }
+
+        /* ===== Skills Cards Grid ===== */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .skill-card {
+            perspective: 1000px;
+            height: 280px;
+            cursor: pointer;
+        }
+
+        .skill-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s ease;
+            transform-style: preserve-3d;
+        }
+
+        .skill-card:hover .skill-card-inner {
+            transform: rotateY(-180deg);
+        }
+
+        .skill-front, .skill-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .skill-front {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(236, 191, 187, 0.15));
+            border: 1px solid rgba(0, 0, 0, 0.06);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+        }
+
+        .skill-tag {
+            display: inline-block;
+            font-size: 0.72rem;
+            padding: 3px 10px;
+            border-radius: 50px;
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+            align-self: flex-start;
+        }
+
+        .skill-tag.recommended { background: rgba(193, 146, 0, 0.12); color: var(--gold); }
+        .skill-tag.design { background: rgba(236, 191, 187, 0.3); color: #8b5e5a; }
+        .skill-tag.animation { background: rgba(198, 238, 232, 0.4); color: #2a7a6f; }
+        .skill-tag.components { background: rgba(196, 181, 253, 0.3); color: #5b21b6; }
+        .skill-tag.polish { background: rgba(253, 186, 116, 0.3); color: #92400e; }
+        .skill-tag.check { background: rgba(198, 238, 232, 0.3); color: #2a7a6f; }
+        .skill-tag.video { background: rgba(252, 165, 165, 0.3); color: #991b1b; }
+        .skill-tag.interactions { background: rgba(198, 238, 232, 0.4); color: #2a7a6f; }
+
+        .skill-front h4 {
+            font-size: 1.15rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skill-front p {
+            font-size: 0.85rem;
+            color: #666;
+            flex: 1;
+        }
+
+        .skill-back {
+            transform: rotateY(180deg);
+            background: #1a1a2e;
+            color: #e2e8f0;
+            font-size: 0.85rem;
+            justify-content: space-between;
+        }
+
+        .skill-back h4 {
+            color: var(--gold);
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skill-back p {
+            font-size: 0.82rem;
+            line-height: 1.6;
+            flex: 1;
+        }
+
+        .skill-back .skill-install {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.5rem 0.75rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.78rem;
+            direction: ltr;
+            text-align: left;
+            margin-top: 0.75rem;
+            word-break: break-all;
+        }
+
+        .skill-back .skill-link {
+            display: inline-block;
+            margin-top: 0.5rem;
+            padding: 6px 16px;
+            background: var(--gold);
+            color: var(--white);
+            border-radius: 50px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: background 0.2s ease;
+            direction: ltr;
+        }
+
+        .skill-back .skill-link:hover {
+            background: #a97d00;
+        }
+
+        /* ===== Table ===== */
+        .commands-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+
+        .commands-table th {
+            text-align: right;
+            padding: 0.75rem 1rem;
+            background: rgba(0, 0, 0, 0.03);
+            border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+            font-weight: 700;
+        }
+
+        .commands-table td {
+            padding: 0.65rem 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .commands-table td:first-child {
+            font-family: 'Courier New', monospace;
+            direction: ltr;
+            color: var(--gold);
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        /* ===== Tree View ===== */
+        .tree {
+            direction: ltr;
+            text-align: left;
+            font-family: 'Courier New', monospace;
+            font-size: 0.88rem;
+            background: rgba(0, 0, 0, 0.03);
+            padding: 1.25rem 1.5rem;
+            border-radius: 12px;
+            margin: 1rem 0 1.5rem;
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .tree .highlight {
+            color: var(--gold);
+            font-weight: 700;
+        }
+
+        /* ===== Analogy Box ===== */
+        .analogy {
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin: 1.5rem 0;
+            background: linear-gradient(135deg, rgba(193, 146, 0, 0.08), rgba(236, 191, 187, 0.1));
+            border: 1px solid rgba(193, 146, 0, 0.15);
+            font-size: 0.95rem;
+            line-height: 1.7;
+        }
+
+        .analogy strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--gold);
+        }
+
+        /* ===== Comparison ===== */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .comparison-card {
+            padding: 1.25rem 1.5rem;
+            border-radius: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        .comparison-card.without {
+            background: rgba(254, 226, 226, 0.3);
+            border-color: rgba(239, 68, 68, 0.15);
+        }
+
+        .comparison-card.with {
+            background: rgba(198, 238, 232, 0.25);
+            border-color: rgba(198, 238, 232, 0.4);
+        }
+
+        .comparison-card h4 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .comparison-card.without h4 { color: #991b1b; }
+        .comparison-card.with h4 { color: #2a7a6f; }
+
+        /* ===== Bottom Navigation ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 1rem 2rem;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 200;
+        }
+
+        .bottom-nav.visible {
+            display: flex;
+        }
+
+        .nav-btn {
+            padding: 10px 28px;
+            border: 2px solid var(--black);
+            border-radius: 50px;
+            background: none;
+            color: var(--black);
+            font-family: 'Heebo', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s var(--spring), background 0.2s ease, color 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .nav-btn:active {
+            transform: scale(0.97);
+        }
+
+        .nav-btn.hidden {
+            visibility: hidden;
+        }
+
+        .nav-btn.primary {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .nav-btn.primary:hover {
+            background: #333;
+        }
+
+        .nav-dots {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .nav-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: rgba(0, 0, 0, 0.15);
+            cursor: pointer;
+            transition: width 0.3s var(--ease-out), background 0.3s ease;
+            border: none;
+        }
+
+        .nav-dot.active {
+            width: 24px;
+            border-radius: 4px;
+            background: var(--gold);
+        }
+
+        /* ===== Completion Screen ===== */
+        .completion {
+            display: none;
+            min-height: 100vh;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .completion.visible {
+            display: flex;
+        }
+
+        .completion-content {
+            opacity: 0;
+            transform: scale(0.8);
+            animation: completionIn 0.6s var(--ease-out) 0.2s forwards;
+        }
+
+        @keyframes completionIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .completion h2 {
+            font-size: clamp(2rem, 5vw, 3rem);
+            font-weight: 900;
+            margin-bottom: 1rem;
+        }
+
+        .completion p {
+            font-size: 1.15rem;
+            color: #555;
+            margin-bottom: 2rem;
+            max-width: 500px;
+        }
+
+        .completion-emoji {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            display: block;
+        }
+
+        .completion-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .completion-btn {
+            padding: 12px 32px;
+            border-radius: 50px;
+            font-family: 'Heebo', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.15s var(--spring), box-shadow 0.2s ease;
+            border: 2px solid var(--black);
+            text-decoration: none;
+        }
+
+        .completion-btn:active {
+            transform: scale(0.97);
+        }
+
+        .completion-btn.primary {
+            background: var(--black);
+            color: var(--white);
+        }
+
+        .completion-btn.secondary {
+            background: none;
+            color: var(--black);
+        }
+
+        .completion-btn:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        /* ===== Scroll Reveal ===== */
+        .reveal {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out);
+        }
+
+        .reveal.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 768px) {
+            .nav-step span:not(.nav-step-num) {
+                display: none;
+            }
+
+            .nav-step-line {
+                width: 12px;
+            }
+
+            .main-content {
+                padding: 2rem 1.25rem;
+                padding-top: 7rem;
+                padding-bottom: 5rem;
+            }
+
+            .flip-grid, .comparison {
+                grid-template-columns: 1fr;
+            }
+
+            .flip-card {
+                height: 200px;
+            }
+
+            .skills-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .skill-card {
+                height: 260px;
+            }
+
+            .bottom-nav {
+                padding: 0.75rem 1rem;
+            }
+
+            .nav-btn {
+                padding: 8px 20px;
+                font-size: 0.85rem;
+            }
+
+            .timeline {
+                padding-right: 1.5rem;
+            }
+        }
+
+        /* ===== גלילה עד התחתון ===== */
+        .main-content {
+            padding-bottom: 5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Progress Bar — הועבר לתוך top-nav -->
+    <div class="progress-bar" id="progressBar" style="display:none;"></div>
+
+    <!-- ===== Hero ===== -->
+    <section class="hero" id="hero">
+        <div class="logo-bar">
+            <img src="LetsAIlogo.svg" alt="Let's AI Logo">
+        </div>
+        <video class="hero-video" autoplay muted loop playsinline preload="auto">
+            <source src="kling_intro.mp4" type="video/mp4">
+        </video>
+        <div class="hero-overlay"></div>
+        <div class="hero-side-fade left"></div>
+        <div class="hero-side-fade right"></div>
+        <div class="hero-content">
+            <h1>לומדים לעבוד עם...<br>Claude Skills</h1>
+            <p class="hero-subtitle">המדריך המלא למתחילים</p>
+            <p>מה זה Skills, איך מתקינים, ואיך הופכים את Claude<br>לשותף עבודה מקצועי שמכיר את הסגנון שלכם</p>
+            <button class="hero-btn" onclick="startTutorial()">בואו נתחיל ←</button>
+        </div>
+    </section>
+
+    <!-- ===== App (Steps) ===== -->
+    <div class="app" id="app">
+
+        <!-- Logo Bar בדפי השלבים -->
+        <div class="logo-bar app-logo-bar">
+            <img src="LetsAIlogo.svg" alt="Let's AI Logo">
+        </div>
+
+        <!-- Top Navigation -->
+        <nav class="top-nav" id="topNav">
+            <div class="nav-progress">
+                <div class="nav-progress-fill" id="navProgressFill" style="width: 20%"></div>
+            </div>
+            <div class="nav-steps">
+                <button class="nav-step active" onclick="goToStep(1)">
+                    <span class="nav-step-num">1</span>
+                    <span>מבוא</span>
+                </button>
+                <div class="nav-step-line"></div>
+                <button class="nav-step" onclick="goToStep(2)">
+                    <span class="nav-step-num">2</span>
+                    <span>התקנה</span>
+                </button>
+                <div class="nav-step-line"></div>
+                <button class="nav-step" onclick="goToStep(3)">
+                    <span class="nav-step-num">3</span>
+                    <span>CLAUDE.md</span>
+                </button>
+                <div class="nav-step-line"></div>
+                <button class="nav-step" onclick="goToStep(4)">
+                    <span class="nav-step-num">4</span>
+                    <span>תהליך עבודה מומלץ</span>
+                </button>
+                <div class="nav-step-line"></div>
+                <button class="nav-step" onclick="goToStep(5)">
+                    <span class="nav-step-num">5</span>
+                    <span>סקילים מומלצים</span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="app-body">
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="step-container">
+
+                    <!-- ===== שלב 1: מבוא ===== -->
+                    <div class="step active" id="step1">
+                        <div class="step-header">
+                            <span class="step-number">שלב 1 מתוך 5</span>
+                            <h2 class="step-title">מה זה Skills?</h2>
+                            <p class="step-desc">הכירו את הכלי שמשנה את האופן שבו עובדים עם Claude</p>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">מה זה בעצם Skill?</h3>
+                            <div class="callout info">
+                                <div class="callout-label">💡 הגדרה</div>
+                                <p>Skill הוא קובץ הוראות שמלמד את Claude לבצע סוג מסוים של עבודה — עיצוב, כתיבה, קוד, ניתוח נתונים, ועוד — בצורה עקבית, מקצועית, ולפי הסטנדרטים שאתם בחרתם.<br>במילים פשוטות: אתם לא מסבירים לו שוב ושוב — אתם מלמדים אותו פעם אחת.</p>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <div class="analogy">
+                                <strong>💭 אנלוגיה</strong>
+                                דמיינו שאתם שוכרים עובד חדש. בלי Skills — אתם מסבירים לו מחדש בכל בוקר איך לעבוד, מה הסגנון, מה חשוב ומה לא. עם Skills — העובד קיבל את הנהלים בהתחלה, וכבר יודע. זה עובד לכל תחום: עיצוב, כתיבת תוכן, פיתוח, ניתוח נתונים, ועוד.
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">ההבדל בלי Skills ועם Skills</h3>
+                            <div class="comparison">
+                                <div class="comparison-card without">
+                                    <h4>❌ ללא Skill</h4>
+                                    <p>צריך להסביר בכל שיחה:</p>
+                                    <div class="code-block">
+                                        <code>בנה לי דף נחיתה.
+השתמש בצבעים עדינים, פונטים קריאים,
+הסגנון שלי הוא כזה וכזה,
+RTL לעברית, רספונסיבי למובייל...</code>
+                                    </div>
+                                </div>
+                                <div class="comparison-card with">
+                                    <h4>✅ עם Skill</h4>
+                                    <p>מספיק להגיד:</p>
+                                    <div class="code-block">
+                                        <code>בנה לי דף נחיתה</code>
+                                    </div>
+                                    <p style="margin-top:0.5rem; font-size:0.88rem; color:#2a7a6f;">Claude כבר יודע את כל השאר — הסגנון, הכללים, ההעדפות שלכם.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">למה להשתמש ב-Skills?</h3>
+                            <div class="flip-grid cols-2">
+                                <div class="flip-card">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">⏱️</div>
+                                            <h4>חיסכון בזמן</h4>
+                                            <p>לא צריך לחזור על עצמכם</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            Claude זוכר את תהליך העבודה שלכם — ההעדפות, הסטנדרטים, הכללים. אתם חוסכים דקות של הסברים בכל שיחה.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flip-card">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">🎯</div>
+                                            <h4>עקביות</h4>
+                                            <p>תמיד אותו סגנון</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            כל הפלטים יוצאים באותו סגנון — בכל שיחה, בכל פרויקט. בלי הפתעות ובלי חוסר עקביות.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flip-card">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">⭐</div>
+                                            <h4>מקצועיות</h4>
+                                            <p>ידע של מומחים</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            Skills נכתבו על ידי מומחים בתחומם — מעצבים, מפתחים, כותבי תוכן, ועוד. אתם נהנים מהניסיון שלהם בלי לשלם על ייעוץ.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flip-card">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">♻️</div>
+                                            <h4>שימוש חוזר</h4>
+                                            <p>התקינו פעם אחת</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            התקינו פעם אחת — והסקיל זמין לנצח בכל פרויקט ובכל שיחה. אין צורך לעשות שום דבר נוסף.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quiz 1 -->
+                        <div class="reveal">
+                            <div class="quiz" data-quiz="1">
+                                <div class="quiz-label">📝 בדיקת הבנה</div>
+                                <div class="quiz-question">מה נכון לגבי Skills?</div>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">צריך להתקין אותם מחדש בכל שיחה</button>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">הם רק לאנשי טכנולוגיה</button>
+                                <button class="quiz-option" data-correct="true" onclick="checkQuiz(this)">הם מלמדים את Claude לעבוד לפי הסטנדרטים שלך</button>
+                                <div class="quiz-feedback" id="quizFeedback1"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== שלב 2: התקנה ===== -->
+                    <div class="step" id="step2">
+                        <div class="step-header">
+                            <span class="step-number">שלב 2 מתוך 5</span>
+                            <h2 class="step-title">התקנה</h2>
+                            <p class="step-desc">שלוש דקות והכל מוכן</p>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">איפה Skills גרים?</h3>
+                            <div class="callout info">
+                                <div class="callout-label">📁 מיקום התיקייה</div>
+                                <p>Skills מותקנים בתיקייה ספציפית במחשב שלכם. Claude Code קורא מתיקייה זו אוטומטית בכל שיחה.</p>
+                            </div>
+
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode(this)">העתק</button>
+                                <code>Windows:   C:\Users\[שם המשתמש]\.claude\skills\
+Mac/Linux: ~/.claude/skills/</code>
+                            </div>
+
+                            <div class="tree">
+                                <span class="highlight">.claude/</span><br>
+                                ├── CLAUDE.md &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ← הגדרות גלובליות (ראו שלב 3)<br>
+                                └── <span class="highlight">skills/</span><br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;├── frontend-design.md<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;├── ui-ux-pro-max/<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;├── SKILL.md<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;│&nbsp;&nbsp;&nbsp;└── data/<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;└── shadcn/<br>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── SKILL.md
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">2 דרכי התקנה</h3>
+
+                            <!-- דרך 1 -->
+                            <div class="accordion">
+                                <div class="accordion-item open">
+                                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                                        ⭐ דרך 1 — תבקשו מ-Claude Code (מומלץ)
+                                        <span class="accordion-arrow">▼</span>
+                                    </button>
+                                    <div class="accordion-body" style="max-height: 600px;">
+                                        <div class="accordion-body-inner">
+                                            <div class="callout recommended">
+                                                <div class="callout-label"><span class="rec-tag">מומלץ</span> הכי קל</div>
+                                                <p>ראשית, וודאו שיש לכם תיקיית Skills. כתבו לקלוד:</p>
+                                            </div>
+                                            <div class="code-block">
+                                                <button class="copy-btn" onclick="copyCode(this)">העתק</button>
+                                                <code>בדוק אם יש לי תיקיית skills ואם לא תיצור לי אחת</code>
+                                            </div>
+                                            <p class="section-text">אחרי שיש לכם תיקייה, פשוט כתבו לקלוד:</p>
+                                            <div class="code-block">
+                                                <button class="copy-btn" onclick="copyCode(this)">העתק</button>
+                                                <code>תתקין לי את הסקיל הזה: [הדביקו כאן את הקישור של הסקיל]</code>
+                                            </div>
+                                            <div class="callout tip">
+                                                <div class="callout-label">💡 טיפ</div>
+                                                <p>אפשר לבקש להתקין כמה Skills בבת אחת — פשוט שלחו את כל הקישורים ביחד.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- דרך 2 — התקנה ידנית -->
+                                <div class="accordion-item">
+                                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                                        🔧 דרך 2 — התקנה ידנית
+                                        <span class="accordion-arrow">▼</span>
+                                    </button>
+                                    <div class="accordion-body">
+                                        <div class="accordion-body-inner">
+                                            <div class="checklist">
+                                                <div class="check-item" onclick="toggleCheck(this)">
+                                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                                    <div class="check-content">
+                                                        <strong>1. פתחו את תיקיית Skills</strong>
+                                                        <span>לחצו Win+R והקלידו: %USERPROFILE%\.claude\skills</span>
+                                                    </div>
+                                                </div>
+                                                <div class="check-item" onclick="toggleCheck(this)">
+                                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                                    <div class="check-content">
+                                                        <strong>2. צרו תיקייה אם לא קיימת</strong>
+                                                        <span>אם התיקייה .claude לא קיימת — צרו אותה</span>
+                                                    </div>
+                                                </div>
+                                                <div class="check-item" onclick="toggleCheck(this)">
+                                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                                    <div class="check-content">
+                                                        <strong>3. הורידו את ה-Skill</strong>
+                                                        <span>קובץ .md או תיקייה מלאה</span>
+                                                    </div>
+                                                </div>
+                                                <div class="check-item" onclick="toggleCheck(this)">
+                                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                                    <div class="check-content">
+                                                        <strong>4. שמרו בתוך תיקיית skills</strong>
+                                                        <span>ישירות בתוך ~/.claude/skills/</span>
+                                                    </div>
+                                                </div>
+                                                <div class="check-item" onclick="toggleCheck(this)">
+                                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                                    <div class="check-content">
+                                                        <strong>5. הפעילו מחדש את Claude Code</strong>
+                                                        <span>סגרו ופתחו שיחה חדשה</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="callout warning">
+                                                <div class="callout-label">⚠️ שימו לב</div>
+                                                <p>אם התיקייה .claude לא קיימת — בקשו מ-Claude Code ליצור אותה, זו הדרך הכי בטוחה.</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">שלב חובה — הפעלת ה-Skill</h3>
+                            <div class="callout warning">
+                                <div class="callout-label">⚠️ חשוב!</div>
+                                <p>לשים את הקובץ בתיקיית skills זה לא מספיק! צריך גם להפעיל את ה-Skill דרך הממשק של Claude Code.</p>
+                            </div>
+                            <div class="checklist">
+                                <div class="check-item" onclick="toggleCheck(this)">
+                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                    <div class="check-content">
+                                        <strong>1. לחצו על לשונית Customize</strong>
+                                        <span>בממשק של Claude Code, מצאו את לשונית Customize</span>
+                                    </div>
+                                </div>
+                                <div class="check-item" onclick="toggleCheck(this)">
+                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                    <div class="check-content">
+                                        <strong>2. בחרו ב-Skills</strong>
+                                        <span>בתפריט שנפתח, בחרו את האפשרות Skills</span>
+                                    </div>
+                                </div>
+                                <div class="check-item" onclick="toggleCheck(this)">
+                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                    <div class="check-content">
+                                        <strong>3. לחצו על + (הוספה)</strong>
+                                        <span>לחצו על כפתור הפלוס כדי להוסיף Skill חדש</span>
+                                    </div>
+                                </div>
+                                <div class="check-item" onclick="toggleCheck(this)">
+                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                    <div class="check-content">
+                                        <strong>4. העלו את קובץ ה-.md</strong>
+                                        <span>בחרו את קובץ ה-.md של ה-Skill מתיקיית skills והעלו אותו</span>
+                                    </div>
+                                </div>
+                                <div class="check-item" onclick="toggleCheck(this)">
+                                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                    <div class="check-content">
+                                        <strong>5. חזרו על זה לכל Skill</strong>
+                                        <span>כל קובץ .md צריך להיות מועלה בנפרד</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="callout tip">
+                                <div class="callout-label">💡 טיפ</div>
+                                <p>רק אחרי ההעלאה דרך Customize → Skills → + , ה-Skill באמת פעיל ו-Claude ישתמש בו.</p>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">איך לדעת שזה עבד?</h3>
+                            <div class="callout success">
+                                <div class="callout-label">✅ בדיקה</div>
+                                <p>פתחו שיחה חדשה ב-Claude Code וכתבו את הסימן <strong>/</strong> (סלאש). תיפתח חלונית עם רשימת כל ה-Skills המותקנים אצלכם.</p>
+                            </div>
+                            <div class="callout tip">
+                                <div class="callout-label">💡 איך להשתמש ב-Skill</div>
+                                <p>כדי להפעיל Skill מסוים, כתבו <strong>/</strong> ואחריו את שם ה-Skill. לדוגמה:</p>
+                            </div>
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode(this)">העתק</button>
+                                <code>/frontend-design בנה לי דף נחיתה לחנות פרחים</code>
+                            </div>
+                            <p class="section-text">ה-Skill ייטען אוטומטית ו-Claude ישתמש בו כדי לבצע את הבקשה שלכם ברמה הכי גבוהה.</p>
+                        </div>
+
+                        <!-- Quiz 2 -->
+                        <div class="reveal">
+                            <div class="quiz" data-quiz="2">
+                                <div class="quiz-label">📝 בדיקת הבנה</div>
+                                <div class="quiz-question">איפה נמצאת תיקיית ה-Skills?</div>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">בתיקיית הורדות</button>
+                                <button class="quiz-option" data-correct="true" onclick="checkQuiz(this)">בתיקייה .claude שבתיקיית המשתמש</button>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">בתיקיית המסמכים</button>
+                                <div class="quiz-feedback" id="quizFeedback2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== שלב 3: CLAUDE.md ===== -->
+                    <div class="step" id="step3">
+                        <div class="step-header">
+                            <span class="step-number">שלב 3 מתוך 5</span>
+                            <h2 class="step-title">CLAUDE.md</h2>
+                            <p class="step-desc">הקובץ שהופך את Claude לשלכם</p>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">מה זה CLAUDE.md?</h3>
+                            <div class="callout info">
+                                <div class="callout-label">📄 הגדרה</div>
+                                <p>CLAUDE.md הוא קובץ טקסט שאתם כותבים פעם אחת, ו-Claude קורא אותו <strong>בכל שיחה</strong> — אוטומטית. הוא מגדיר איך Claude מתנהג, מה הסגנון שלכם, מה לעשות ומה לא לעשות.</p>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">שני סוגי קבצים</h3>
+                            <div class="flip-grid cols-2">
+                                <div class="flip-card" style="height: 240px;">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">🌍</div>
+                                            <h4>גלובלי — חל על הכל</h4>
+                                            <p>הגדרות שחלות על כל שיחה ופרויקט</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            <strong>מיקום:</strong><br>
+                                            <code style="font-size:0.8rem; background:rgba(0,0,0,0.1); padding:2px 6px; border-radius:4px;">C:\Users\[שם]\.claude\CLAUDE.md</code><br><br>
+                                            חל על <strong>כל</strong> שיחה בכל פרויקט.<br>
+                                            כאן שמים: שפת תקשורת, פונטים, צבעים, כללים קבועים.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flip-card" style="height: 240px;">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">📁</div>
+                                            <h4>פרויקט — חל רק על הפרויקט</h4>
+                                            <p>הגדרות ייחודיות לפרויקט ספציפי</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            <strong>מיקום:</strong><br>
+                                            <code style="font-size:0.8rem; background:rgba(0,0,0,0.1); padding:2px 6px; border-radius:4px;">[שורש-הפרויקט]\CLAUDE.md</code><br><br>
+                                            חל רק בתוך אותו פרויקט.<br>
+                                            כאן שמים: design system של הלקוח, טכנולוגיה ספציפית, הוראות ייחודיות.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="callout tip">
+                                <div class="callout-label">💡 טיפ</div>
+                                <p>הקובץ הגלובלי + קובץ הפרויקט פועלים יחד — Claude קורא את שניהם.</p>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">מה כדאי לשים בקובץ הגלובלי?</h3>
+                            <div class="accordion">
+                                <div class="accordion-item">
+                                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                                        🗣️ שפה ותקשורת
+                                        <span class="accordion-arrow">▼</span>
+                                    </button>
+                                    <div class="accordion-body">
+                                        <div class="accordion-body-inner">
+                                            <ul style="padding-right: 1.25rem;">
+                                                <li>באיזו שפה לדבר איתכם</li>
+                                                <li>האם הערות בקוד בעברית או אנגלית</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                                        🎨 עיצוב ברירת מחדל
+                                        <span class="accordion-arrow">▼</span>
+                                    </button>
+                                    <div class="accordion-body">
+                                        <div class="accordion-body-inner">
+                                            <ul style="padding-right: 1.25rem;">
+                                                <li>צבעי הבסיס שלכם</li>
+                                                <li>פונטים מועדפים</li>
+                                                <li>light mode / dark mode</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                                        📐 כללי עבודה
+                                        <span class="accordion-arrow">▼</span>
+                                    </button>
+                                    <div class="accordion-body">
+                                        <div class="accordion-body-inner">
+                                            <ul style="padding-right: 1.25rem;">
+                                                <li>מבנה תיקיות קבוע לכל פרויקט</li>
+                                                <li>RTL אם רוב האתרים בעברית</li>
+                                                <li>לשאול על לוגו ותמונות בתחילת פרויקט</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                                        🤖 הפעלת Skills אוטומטית
+                                        <span class="accordion-arrow">▼</span>
+                                    </button>
+                                    <div class="accordion-body">
+                                        <div class="accordion-body-inner">
+                                            <p>לפי סוג הבקשה — איזה Skill לטעון בלי שתצטרכו לבקש.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="accordion-item">
+                                    <button class="accordion-header" onclick="toggleAccordion(this)">
+                                        🚫 מה לא לעשות
+                                        <span class="accordion-arrow">▼</span>
+                                    </button>
+                                    <div class="accordion-body">
+                                        <div class="accordion-body-inner">
+                                            <ul style="padding-right: 1.25rem;">
+                                                <li>לא להוסיף features שלא ביקשתם</li>
+                                                <li>לא ליצור קבצים מיותרים</li>
+                                                <li>לא לעשות commit ללא בקשה</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">דוגמה לקטע מ-CLAUDE.md אמיתי</h3>
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode(this)">העתק</button>
+                                <code>## שפה
+- תקשורת: עברית
+- קוד: אנגלית
+- הערות בקוד: עברית
+
+## עיצוב ברירת מחדל
+רקע: לבן | טקסט: שחור
+צבעי מבטא: #ECBFBB | #C9A4A0 | #C19200
+
+## כללים
+- תמיד RTL בעברית
+- תמיד שאל על לוגו בתחילת פרויקט
+- לוגו תמיד בשמאל פיזי</code>
+                            </div>
+                        </div>
+
+                        <!-- Quiz 3 -->
+                        <div class="reveal">
+                            <div class="quiz" data-quiz="3">
+                                <div class="quiz-label">📝 בדיקת הבנה</div>
+                                <div class="quiz-question">מה ההבדל בין CLAUDE.md גלובלי לפרויקטי?</div>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">הגלובלי רק לקוד, הפרויקטי לעיצוב</button>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">אין הבדל</button>
+                                <button class="quiz-option" data-correct="true" onclick="checkQuiz(this)">הגלובלי חל על הכל, הפרויקטי רק בתוך הפרויקט</button>
+                                <div class="quiz-feedback" id="quizFeedback3"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== שלב 4: תהליך עבודה מומלץ ===== -->
+                    <div class="step" id="step4">
+                        <div class="step-header">
+                            <span class="step-number">שלב 4 מתוך 5</span>
+                            <h2 class="step-title">תהליך עבודה מומלץ</h2>
+                            <p class="step-desc">איך עובדים נכון עם Skills, מתחילה ועד סוף</p>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">נקודת ההתחלה: ה-PRD</h3>
+                            <div class="callout info">
+                                <div class="callout-label">📋 מה זה PRD?</div>
+                                <p>PRD = Product Requirements Document = מסמך שמתאר מה רוצים לבנות.<br>
+                                אתם כותבים מה האתר צריך לעשות — Claude מחליט איך לבנות אותו.<br><br>
+                                אחרי שנותנים PRD — Claude שואל 3 שאלות:</p>
+                                <ol style="padding-right: 1.5rem; margin-top: 0.5rem;">
+                                    <li>יש לך design system או אתר reference לסגנון?</li>
+                                    <li>יש לך לוגו, תמונות, או סרטונים?</li>
+                                    <li>האתר בעברית?</li>
+                                </ol>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">בחירת מסלול עיצוב</h3>
+                            <div class="flip-grid">
+                                <div class="flip-card" style="height: 230px;">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">🎨</div>
+                                            <h4>Design System מוכן</h4>
+                                            <p>יש לי צבעים, פונטים ורכיבים</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            יש לכם צבעים, פונטים, רכיבים מוגדרים → Claude בונה ישר לפיהם. אין צורך בשלב חקירה.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flip-card" style="height: 230px;">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">📸</div>
+                                            <h4>Screenshot לחיקוי</h4>
+                                            <p>יש לי אתר שאני אוהב</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            תנו screenshot → Claude מחלץ את הסגנון עם <code>/extract</code> ובונה לפיו. קל ומהיר.
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flip-card" style="height: 230px;">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">✨</div>
+                                            <h4>אין לי כלום</h4>
+                                            <p>Claude יחליט בשבילי</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            Claude משתמש בצבעי ברירת המחדל שהגדרתם ב-CLAUDE.md. לכן חשוב להגדיר אותם מראש!
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flip-card" style="height: 230px;">
+                                    <div class="flip-card-inner">
+                                        <div class="flip-front">
+                                            <div class="flip-icon">💻</div>
+                                            <h4>קוד קיים</h4>
+                                            <p>יש לי קוד מ-IDE אחר</p>
+                                            <span class="flip-hint">העבירו את העכבר ←</span>
+                                        </div>
+                                        <div class="flip-back">
+                                            <ol style="padding-right: 1rem; font-size: 0.85rem;">
+                                                <li>פתחו Claude Code בתיקיית הפרויקט</li>
+                                                <li>בקשו: "קרא את כל הקבצים בפרויקט"</li>
+                                                <li>אחרי שקרא — הפעילו Skills</li>
+                                            </ol>
+                                            <div style="margin-top: 0.5rem; font-size: 0.8rem; color: var(--gold);">💡 תמיד בקשו מ-Claude לקרוא קודם!</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">שלבי הבנייה</h3>
+                            <div class="timeline">
+                                <div class="timeline-item visible">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-step">שלב 1</div>
+                                    <div class="timeline-title">תכנון עיצובי</div>
+                                    <span class="timeline-skill">ui-ux-pro-max</span>
+                                    <div class="timeline-desc">בחירת צבעים, פונטים, סגנון ויזואלי לפי סוג המוצר</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-step">שלב 2</div>
+                                    <div class="timeline-title">בנייה</div>
+                                    <span class="timeline-skill">frontend-design / interface-design</span>
+                                    <div class="timeline-desc">דף נחיתה → frontend-design | דשבורד → interface-design</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-step">שלב 3</div>
+                                    <div class="timeline-title">אנימציות</div>
+                                    <span class="timeline-skill">interaction-design + emil-design-eng</span>
+                                    <div class="timeline-desc">תנועה מכוונת — לא דקורטיבית</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-step">שלב 4</div>
+                                    <div class="timeline-title">שיפור ופוליש</div>
+                                    <span class="timeline-skill">/polish, /audit, /critique...</span>
+                                    <div class="timeline-desc">פקודות לפי הצורך — ראו טבלה למטה</div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot"></div>
+                                    <div class="timeline-step">שלב 5</div>
+                                    <div class="timeline-title">בדיקה סופית</div>
+                                    <span class="timeline-skill">web-design-guidelines</span>
+                                    <div class="timeline-desc">נגישות, contrast, תקנים</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">טבלת פקודות — מה לבקש ומתי</h3>
+                            <table class="commands-table">
+                                <thead>
+                                    <tr><th>פקודה</th><th>מתי לבקש</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td>/polish</td><td>הדיזיין עובד אבל חסר משהו</td></tr>
+                                    <tr><td>/audit</td><td>רוצה ציון + רשימת בעיות</td></tr>
+                                    <tr><td>/critique</td><td>ביקורת מעמיקה ומפורטת</td></tr>
+                                    <tr><td>/delight</td><td>הוספת "wow moments" — פרטים שמפתיעים</td></tr>
+                                    <tr><td>/typeset</td><td>הטיפוגרפיה לא עובדת</td></tr>
+                                    <tr><td>/colorize</td><td>הצבעים לא מחוברים</td></tr>
+                                    <tr><td>/animate</td><td>הוספת אנימציות</td></tr>
+                                    <tr><td>/arrange</td><td>תיקון לייאוט והיררכיה</td></tr>
+                                    <tr><td>/bolder</td><td>הדיזיין חלש — צריך יותר אומץ</td></tr>
+                                    <tr><td>/quieter</td><td>יותר מדי רעש — צריך רגיעה</td></tr>
+                                    <tr><td>/distill</td><td>פישוט — הסרת עומס</td></tr>
+                                    <tr><td>/overdrive</td><td>משהו מרהיב ומקסימליסטי לגמרי</td></tr>
+                                    <tr><td>/extract</td><td>חילוץ סגנון מ-screenshot</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="reveal">
+                            <div class="callout tip">
+                                <div class="callout-label">💡 טיפ חשוב</div>
+                                <p>בסוף כל פרויקט Claude שואל: "האם תרצי גרסה רספונסיבית לנייד?"</p>
+                            </div>
+                        </div>
+
+                        <!-- Quiz 4 -->
+                        <div class="reveal">
+                            <div class="quiz" data-quiz="4">
+                                <div class="quiz-label">📝 בדיקת הבנה</div>
+                                <div class="quiz-question">מה השלב הראשון אחרי קבלת PRD?</div>
+                                <button class="quiz-option" data-correct="true" onclick="checkQuiz(this)">שואלים על עיצוב, לוגו, ותמונות</button>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">מתחילים לכתוב קוד מיד</button>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">בוחרים צבעים לבד</button>
+                                <div class="quiz-feedback" id="quizFeedback4"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ===== שלב 5: סקילים מומלצים ===== -->
+                    <div class="step" id="step5">
+                        <div class="step-header">
+                            <span class="step-number">שלב 5 מתוך 5</span>
+                            <h2 class="step-title">סקילים מומלצים</h2>
+                            <p class="step-desc">מה להתקין ולמה</p>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">איפה מוצאים Skills?</h3>
+                            <div class="callout success">
+                                <div class="callout-label">🔍 מנוע חיפוש</div>
+                                <p>האתר המרכזי: <strong>skills.sh</strong> — מנוע חיפוש לכל ה-Skills הזמינים.<br>בנוסף: GitHub, אתרי מפתחים ספציפיים.</p>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">Skills עיצוב ו-UI/UX</h3>
+                            <div class="skills-grid">
+                                <!-- 1. UI/UX Pro Max -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag recommended">⭐ מומלץ ביותר</span>
+                                            <h4>UI/UX Pro Max</h4>
+                                            <p>161 פלטות צבעים, 57 זוגות פונטים, 99 גיידליינים — לכל 10 טכנולוגיות</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>UI/UX Pro Max</h4>
+                                            <p><strong>מתי:</strong> בכל פרויקט, לפני שמתחילים לעצב.<br>מכיל מאגר עצום של פלטות, פונטים, תבניות, ותקני עיצוב.</p>
+                                            <a class="skill-link" href="https://github.com/nextlevelbuilder/ui-ux-pro-max-skill" target="_blank" rel="noopener">GitHub ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 2. Frontend Design -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag recommended">⭐ מומלץ ביותר</span>
+                                            <h4>Frontend Design</h4>
+                                            <p>ממשקים מרהיבים — נגד עיצוב גנרי. מכריח בחירות עיצוביות מכוונות.</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Frontend Design</h4>
+                                            <p><strong>מתי:</strong> בכל דף נחיתה, אתר שיווקי, פורטפוליו.</p>
+                                            <a class="skill-link" href="https://skills.sh" target="_blank" rel="noopener">skills.sh ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 3. Interface Design -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag design">עיצוב</span>
+                                            <h4>Interface Design</h4>
+                                            <p>עיצוב דשבורדים ואפליקציות — היררכיה ויזואלית, depth, ללא גנרי</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Interface Design</h4>
+                                            <p><strong>מתי:</strong> דשבורד, SaaS, כלי ניהול — לא לדפי שיווק.</p>
+                                            <a class="skill-link" href="https://skills.sh" target="_blank" rel="noopener">skills.sh ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 4. Impeccable -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag polish">פוליש | 21 פקודות</span>
+                                            <h4>Impeccable</h4>
+                                            <p>/polish, /audit, /critique, /delight, /overdrive ועוד — כל אחת מייעלת היבט אחד</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Impeccable</h4>
+                                            <p><strong>מתי:</strong> בכל שלב של שיפור ופוליש. 21 פקודות ייעודיות לכל היבט בעיצוב.</p>
+                                            <a class="skill-link" href="https://github.com/pbakaus/impeccable" target="_blank" rel="noopener">GitHub ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 5. Emil Kowalski -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag animation">אנימציות</span>
+                                            <h4>Emil Kowalski Design Eng</h4>
+                                            <p>פילוסופיית אנימציות של מהנדס הדיזיין של Linear</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Emil Kowalski</h4>
+                                            <p><strong>מתי:</strong> לפני כל אנימציה. מתי להוסיף תנועה ומתי לא, easing נכון, spring physics.</p>
+                                            <a class="skill-link" href="https://github.com/emilkowalski/skill" target="_blank" rel="noopener">GitHub ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 6. Interaction Design -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag interactions">אינטראקציות</span>
+                                            <h4>Interaction Design</h4>
+                                            <p>skeleton screens, page transitions, ripple, swipe, easing scale</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Interaction Design</h4>
+                                            <p><strong>מתי:</strong> כשמוסיפים loading states, אנימציות, micro-interactions.</p>
+                                            <a class="skill-link" href="https://skills.sh" target="_blank" rel="noopener">skills.sh ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 7. shadcn/ui -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag components">קומפוננטים</span>
+                                            <h4>shadcn/ui</h4>
+                                            <p>ידע מעמיק על ספריית הקומפוננטים — buttons, modals, forms, tables</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>shadcn/ui</h4>
+                                            <p><strong>מתי:</strong> כל פרויקט React שמשתמש ב-shadcn.</p>
+                                            <a class="skill-link" href="https://skills.sh" target="_blank" rel="noopener">skills.sh ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 8. Web Design Guidelines -->
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag check">בדיקה</span>
+                                            <h4>Web Design Guidelines</h4>
+                                            <p>בודק קוד מול תקני נגישות ו-UX של Vercel</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Web Design Guidelines</h4>
+                                            <p><strong>מתי:</strong> בדיקה סופית לפני העלאה לאוויר.</p>
+                                            <a class="skill-link" href="https://skills.sh" target="_blank" rel="noopener">skills.sh ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- קישור כללי -->
+                            <div class="callout tip" style="margin-top: 1.5rem;">
+                                <div class="callout-label">💡 עוד סקילים</div>
+                                <p>כל הסקילים הרשמיים של Anthropic ושל הקהילה נמצאים באתר <a href="https://skills.sh" target="_blank" rel="noopener" style="color: var(--gold); font-weight: 700;">skills.sh</a> — חפשו, גלו, והתקינו בקליק.</p>
+                            </div>
+                        </div>
+
+                        <div class="reveal">
+                            <h3 class="section-title">Skills וידאו</h3>
+                            <div class="skills-grid" style="grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));">
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag video">וידאו</span>
+                                            <h4>Remotion Best Practices</h4>
+                                            <p>38 קבצי חוקים לעבודה עם Remotion — אנימציות, אודיו, כתוביות, מעברים</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Remotion Best Practices</h4>
+                                            <p><strong>מתי:</strong> יצירת וידאו מתוך React.</p>
+                                            <a class="skill-link" href="https://github.com/remotion-dev/skills" target="_blank" rel="noopener">GitHub ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="skill-card">
+                                    <div class="skill-card-inner">
+                                        <div class="skill-front">
+                                            <span class="skill-tag video">וידאו</span>
+                                            <h4>Remotion Render</h4>
+                                            <p>המרת קוד React/Remotion לקובץ MP4</p>
+                                        </div>
+                                        <div class="skill-back">
+                                            <h4>Remotion Render</h4>
+                                            <p><strong>מתי:</strong> רינדור וידאו מקוד React.</p>
+                                            <a class="skill-link" href="https://github.com/inferen-sh/skills" target="_blank" rel="noopener">GitHub ↗</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Quiz 5 -->
+                        <div class="reveal">
+                            <div class="quiz" data-quiz="5">
+                                <div class="quiz-label">📝 בדיקת הבנה</div>
+                                <div class="quiz-question">איזה Skill מתאים לבניית דף נחיתה?</div>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">interface-design</button>
+                                <button class="quiz-option" data-correct="true" onclick="checkQuiz(this)">frontend-design</button>
+                                <button class="quiz-option" data-correct="false" onclick="checkQuiz(this)">remotion-best-practices</button>
+                                <div class="quiz-feedback" id="quizFeedback5"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav" id="bottomNav">
+        <button class="nav-btn" id="prevBtn" onclick="prevStep()">→ הקודם</button>
+        <div class="nav-dots" id="navDots">
+            <button class="nav-dot active" onclick="goToStep(1)"></button>
+            <button class="nav-dot" onclick="goToStep(2)"></button>
+            <button class="nav-dot" onclick="goToStep(3)"></button>
+            <button class="nav-dot" onclick="goToStep(4)"></button>
+            <button class="nav-dot" onclick="goToStep(5)"></button>
+        </div>
+        <button class="nav-btn primary" id="nextBtn" onclick="nextStep()">הבא ←</button>
+    </nav>
+
+    <!-- ===== Completion Screen ===== -->
+    <section class="completion" id="completion">
+        <div class="logo-bar" style="position:fixed;top:0;left:0;right:0;z-index:500;">
+            <img src="LetsAIlogo.svg" alt="Let's AI Logo">
+        </div>
+        <div class="completion-content">
+            <span class="completion-emoji">🎉</span>
+            <h2>סיימתם!</h2>
+            <p>עכשיו אתם מוכנים לעבוד עם Skills. התקינו את מה שצריך, כתבו את ה-CLAUDE.md שלכם, ותנו ל-Claude לעבוד בשבילכם.</p>
+            <div class="completion-actions">
+                <button class="completion-btn primary" onclick="shareWhatsApp()">שתפו ב-WhatsApp</button>
+                <button class="completion-btn secondary" onclick="copyLink()">העתקת קישור</button>
+                <button class="completion-btn secondary" onclick="restartTutorial()">חזרה להתחלה</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        /* ===== משתנים גלובליים ===== */
+        let currentStep = 1;
+        const totalSteps = 5;
+
+        /* ===== Hero → App ===== */
+        window.addEventListener('load', () => {
+            document.querySelector('.hero').classList.add('animate');
+            /* אחרי 2 שניות — המלבן יורד למטה */
+            setTimeout(() => {
+                const content = document.querySelector('.hero-content');
+                const heroHeight = document.querySelector('.hero').offsetHeight;
+                const contentHeight = content.offsetHeight;
+                const bottomPos = heroHeight - contentHeight - (window.innerHeight * 0.03);
+                content.style.top = bottomPos + 'px';
+            }, 2000);
+        });
+
+        function startTutorial() {
+            const hero = document.getElementById('hero');
+            const app = document.getElementById('app');
+            const progressBar = document.getElementById('progressBar');
+            const bottomNav = document.getElementById('bottomNav');
+
+            hero.style.opacity = '0';
+            hero.style.transition = 'opacity 0.4s ease';
+
+            setTimeout(() => {
+                hero.style.display = 'none';
+                app.classList.add('visible');
+                document.getElementById('topNav').classList.add('visible');
+                bottomNav.classList.add('visible');
+                updateStep(1);
+                window.scrollTo(0, 0);
+            }, 400);
+        }
+
+        /* ===== ניווט בין שלבים ===== */
+        function goToStep(step) {
+            if (step < 1 || step > totalSteps) return;
+            currentStep = step;
+            updateStep(step);
+        }
+
+        function nextStep() {
+            if (currentStep < totalSteps) {
+                currentStep++;
+                updateStep(currentStep);
+            } else {
+                showCompletion();
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStep(currentStep);
+            }
+        }
+
+        function updateStep(step) {
+            /* עדכון תוכן ראשי */
+            document.querySelectorAll('.step').forEach(s => {
+                s.classList.remove('active');
+            });
+            const activeStep = document.getElementById('step' + step);
+            if (activeStep) {
+                activeStep.classList.add('active');
+            }
+
+            /* עדכון top nav */
+            document.querySelectorAll('.nav-step').forEach((item, i) => {
+                item.classList.remove('active');
+                if (i < step - 1) {
+                    item.classList.add('completed');
+                    item.querySelector('.nav-step-num').textContent = '✓';
+                } else {
+                    item.classList.remove('completed');
+                    item.querySelector('.nav-step-num').textContent = (i + 1);
+                }
+                if (i === step - 1) {
+                    item.classList.add('active');
+                }
+            });
+
+            /* עדכון progress bar */
+            const progress = (step / totalSteps) * 100;
+            document.getElementById('navProgressFill').style.width = progress + '%';
+
+            /* עדכון נקודות */
+            document.querySelectorAll('.nav-dot').forEach((dot, i) => {
+                dot.classList.toggle('active', i === step - 1);
+            });
+
+            /* עדכון כפתורים */
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            prevBtn.classList.toggle('hidden', step === 1);
+            nextBtn.textContent = step === totalSteps ? 'סיום ←' : 'הבא ←';
+
+            /* גלילה לראש */
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+
+            /* הפעלת אנימציות reveal */
+            setTimeout(() => {
+                triggerRevealAnimations();
+                triggerTimelineAnimations();
+            }, 100);
+        }
+
+        /* ===== Completion Screen ===== */
+        function showCompletion() {
+            const app = document.getElementById('app');
+            const bottomNav = document.getElementById('bottomNav');
+            const progressBar = document.getElementById('progressBar');
+            const completion = document.getElementById('completion');
+
+            app.classList.remove('visible');
+            bottomNav.classList.remove('visible');
+            progressBar.classList.remove('visible');
+            completion.classList.add('visible');
+            window.scrollTo(0, 0);
+        }
+
+        function restartTutorial() {
+            const completion = document.getElementById('completion');
+            const hero = document.getElementById('hero');
+
+            completion.classList.remove('visible');
+            hero.style.display = '';
+            hero.style.opacity = '1';
+            currentStep = 1;
+        }
+
+        /* ===== שיתוף ===== */
+        function shareWhatsApp() {
+            const text = encodeURIComponent('למדתי איך לעבוד עם Claude Skills! מדריך מומלץ 🎯');
+            const url = encodeURIComponent(window.location.href);
+            window.open('https://wa.me/?text=' + text + '%20' + url, '_blank');
+        }
+
+        function copyLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                const btn = event.target;
+                btn.textContent = '✓ הועתק!';
+                setTimeout(() => { btn.textContent = 'העתקת קישור'; }, 2000);
+            });
+        }
+
+        /* ===== Copy Code ===== */
+        function copyCode(btn) {
+            const code = btn.parentElement.querySelector('code');
+            navigator.clipboard.writeText(code.textContent).then(() => {
+                btn.textContent = '✓ הועתק';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.textContent = 'העתק';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+
+        /* ===== Quiz ===== */
+        function checkQuiz(btn) {
+            const quiz = btn.closest('.quiz');
+            const quizNum = quiz.dataset.quiz;
+            const feedback = document.getElementById('quizFeedback' + quizNum);
+            const isCorrect = btn.dataset.correct === 'true';
+
+            /* סימון כל הכפתורים כ-selected */
+            quiz.querySelectorAll('.quiz-option').forEach(opt => {
+                opt.classList.add('selected');
+            });
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                feedback.textContent = '🎉 נכון מאוד!';
+                feedback.className = 'quiz-feedback visible correct';
+                launchConfetti(btn);
+            } else {
+                btn.classList.add('wrong');
+                /* הצגת התשובה הנכונה */
+                quiz.querySelectorAll('.quiz-option').forEach(opt => {
+                    if (opt.dataset.correct === 'true') {
+                        opt.classList.add('correct');
+                    }
+                });
+                feedback.textContent = '❌ לא מדויק — ראו את התשובה הנכונה מסומנת למעלה.';
+                feedback.className = 'quiz-feedback visible wrong';
+            }
+        }
+
+        /* ===== Accordion ===== */
+        function toggleAccordion(header) {
+            const item = header.parentElement;
+            const body = item.querySelector('.accordion-body');
+            const isOpen = item.classList.contains('open');
+
+            if (isOpen) {
+                body.style.maxHeight = '0';
+                item.classList.remove('open');
+            } else {
+                body.style.maxHeight = body.scrollHeight + 'px';
+                item.classList.add('open');
+            }
+        }
+
+        /* ===== Checklist ===== */
+        function toggleCheck(item) {
+            item.classList.toggle('checked');
+        }
+
+        /* ===== Scroll Reveal ===== */
+        function triggerRevealAnimations() {
+            const reveals = document.querySelectorAll('.step.active .reveal');
+            reveals.forEach((el, i) => {
+                setTimeout(() => {
+                    el.classList.add('visible');
+                }, i * 100);
+            });
+        }
+
+        /* ===== Timeline Animations ===== */
+        function triggerTimelineAnimations() {
+            const items = document.querySelectorAll('.step.active .timeline-item');
+            items.forEach((item, i) => {
+                setTimeout(() => {
+                    item.classList.add('visible');
+                }, i * 150 + 200);
+            });
+        }
+
+        /* ===== Scroll-triggered reveals (לגלילה בתוך שלב) ===== */
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.15 });
+
+        /* מפעיל observer על כל הקומפוננטים */
+        function initObservers() {
+            document.querySelectorAll('.reveal, .timeline-item').forEach(el => {
+                observer.observe(el);
+            });
+        }
+
+        /* ===== מקשי מקלדת ===== */
+        document.addEventListener('keydown', (e) => {
+            if (!document.getElementById('app').classList.contains('visible')) return;
+
+            if (e.key === 'ArrowLeft') {
+                nextStep();
+            } else if (e.key === 'ArrowRight') {
+                prevStep();
+            }
+        });
+
+        /* ===== הפעלת סרטון Hero ===== */
+        function tryPlayVideo() {
+            const video = document.querySelector('.hero-video');
+            if (video) {
+                video.play().catch(() => {
+                    /* אם הדפדפן חוסם autoplay — ניסיון נוסף בלחיצה */
+                    document.addEventListener('click', () => {
+                        video.play().catch(() => {});
+                    }, { once: true });
+                });
+            }
+        }
+
+        /* ===== קונפטי ===== */
+        function launchConfetti(origin) {
+            const rect = origin.getBoundingClientRect();
+            const x = rect.left + rect.width / 2;
+            const y = rect.top + rect.height / 2;
+            const colors = ['#ECBFBB', '#C9A4A0', '#C19200', '#c6eee8', '#FFD700', '#FF69B4'];
+
+            for (let i = 0; i < 40; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `
+                    position: fixed;
+                    left: ${x}px;
+                    top: ${y}px;
+                    width: ${Math.random() * 8 + 4}px;
+                    height: ${Math.random() * 8 + 4}px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    border-radius: ${Math.random() > 0.5 ? '50%' : '2px'};
+                    pointer-events: none;
+                    z-index: 9999;
+                    opacity: 1;
+                `;
+                document.body.appendChild(confetti);
+
+                const angle = Math.random() * Math.PI * 2;
+                const velocity = Math.random() * 200 + 100;
+                const vx = Math.cos(angle) * velocity;
+                const vy = Math.sin(angle) * velocity - 150;
+
+                confetti.animate([
+                    { transform: 'translate(0, 0) rotate(0deg)', opacity: 1 },
+                    { transform: `translate(${vx}px, ${vy + 300}px) rotate(${Math.random() * 720 - 360}deg)`, opacity: 0 }
+                ], {
+                    duration: Math.random() * 800 + 600,
+                    easing: 'cubic-bezier(0.25, 1, 0.5, 1)',
+                    fill: 'forwards'
+                }).onfinish = () => confetti.remove();
+            }
+        }
+
+        /* ===== אתחול ===== */
+        initObservers();
+        tryPlayVideo();
+    </script>
+</body>
+</html>

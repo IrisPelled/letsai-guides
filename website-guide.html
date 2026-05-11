@@ -1,0 +1,1701 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>בניית אתר עם Claude Code — מ-א׳ עד ת׳</title>
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        /* ===== משתנים גלובליים ===== */
+        :root {
+            --teal:         #00b09b;
+            --teal-light:   #9deee5;
+            --coral:        #db7757;
+            --coral-dark:   #b85e3f;
+            --amber:        #f5b400;
+            --black:        #1a1a1a;
+            --white:        #FFFFFF;
+            --glass-bg:     rgba(255,255,255,0.6);
+            --glass-border: rgba(255,255,255,0.3);
+            --glass-shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --ease-out:     cubic-bezier(0.16,1,0.3,1);
+            --spring:       cubic-bezier(0.34,1.56,0.64,1);
+            --content-max:  760px;
+            --user-border:  #db7757;
+            --claude-border:#0d7c70;
+            --info-border:  #7eccc5;
+        }
+
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        html { direction:rtl; scroll-behavior:smooth; }
+        body { font-family:'Heebo',sans-serif; color:var(--black); background:var(--white); line-height:1.7; overflow-x:hidden; }
+        h1,h2,h3,h4 { font-family:'Heebo',sans-serif; line-height:1.3; }
+
+        /* ===== Logo Bar ===== */
+        .logo-bar {
+            width:100%; background:var(--teal-light); padding:8px 20px;
+            display:flex; align-items:center; justify-content:flex-start;
+            direction:ltr; z-index:500;
+            border-bottom:1px solid rgba(0,0,0,0.06);
+        }
+        .logo-bar img { height:80px; width:auto; }
+        .hero .logo-bar {
+            position:absolute; top:0; left:0; right:0; z-index:10;
+            background:rgba(255,255,255,0.85);
+            backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+        }
+        .app-logo-bar { position:fixed; top:0; left:0; right:0; z-index:500; background:var(--teal-light); }
+
+        /* ===== Hero ===== */
+        .hero {
+            position:relative; min-height:100vh;
+            display:flex; align-items:flex-end; justify-content:center;
+            overflow:hidden;
+            background:linear-gradient(135deg,#f8f0ef 0%,#f5ece4 40%,#f0ead6 100%);
+        }
+        .hero-video { position:absolute; top:0; left:0; width:100%; height:100%; object-fit:cover; z-index:0; }
+        .hero-overlay { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.42); z-index:1; }
+        .hero-side-fade { position:absolute; top:0; width:20%; height:100%; z-index:2; pointer-events:none; }
+        .hero-side-fade.left  { left:0;  background:linear-gradient(to right,rgba(157,238,229,1) 0%,rgba(157,238,229,0.9) 40%,rgba(157,238,229,0) 100%); }
+        .hero-side-fade.right { right:0; background:linear-gradient(to left, rgba(157,238,229,1) 0%,rgba(157,238,229,0.9) 40%,rgba(157,238,229,0) 100%); }
+        .hero-content {
+            position:absolute; z-index:3; text-align:center;
+            padding:2rem 3rem 2.5rem; max-width:640px; width:90%;
+            background:rgba(255,255,255,0.4);
+            backdrop-filter:blur(10px); -webkit-backdrop-filter:blur(10px);
+            border-radius:20px; border:1px solid rgba(255,255,255,0.4);
+            left:50%; top:12vh; transform:translateX(-50%);
+            transition:top 1.2s cubic-bezier(0.25,1,0.5,1);
+        }
+        .hero-badge {
+            display:inline-block; padding:4px 16px;
+            background:rgba(42,157,143,0.14); color:var(--teal);
+            border-radius:50px; font-size:0.78rem; font-weight:700;
+            margin-bottom:1rem; opacity:0; transform:translateY(20px);
+        }
+        .hero-content h1 { font-size:clamp(1.9rem,4.5vw,2.9rem); font-weight:800; margin-bottom:0.4rem; opacity:0; transform:translateY(30px); }
+        .hero-subtitle { font-size:clamp(1rem,2vw,1.15rem); color:#333; font-weight:600; margin-bottom:0.5rem; opacity:0; transform:translateY(30px); }
+        .hero-content p { font-size:clamp(0.88rem,1.8vw,1rem); color:#555; margin-bottom:1.5rem; opacity:0; transform:translateY(30px); }
+        .hero-btn {
+            display:inline-block; padding:15px 46px;
+            background:#db7757;
+            color:var(--white);
+            border:none; border-radius:50px;
+            font-family:'Heebo',sans-serif; font-size:1.1rem; font-weight:600;
+            cursor:pointer; opacity:0; transform:translateY(30px);
+            transition:transform 0.2s var(--spring),box-shadow 0.2s ease;
+        }
+        .hero-btn:hover { transform:translateY(-2px); box-shadow:0 8px 30px rgba(0,0,0,0.2); }
+        .hero-btn:active { transform:scale(0.97); }
+
+        .hero.animate .hero-badge    { animation:fadeUp 0.8s var(--ease-out) 0.3s forwards; }
+        .hero.animate h1             { animation:fadeUp 0.8s var(--ease-out) 0.5s forwards; }
+        .hero.animate .hero-subtitle { animation:fadeUp 0.8s var(--ease-out) 0.7s forwards; }
+        .hero.animate p              { animation:fadeUp 0.8s var(--ease-out) 0.9s forwards; }
+        .hero.animate .hero-btn      { animation:fadeUp 0.8s var(--ease-out) 1.1s forwards; }
+        @keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+
+        /* ===== App Layout ===== */
+        .app { display:none; min-height:100vh; flex-direction:column; }
+        .app.visible { display:flex; }
+        .app-body { display:flex; flex:1; }
+
+        /* ===== Top Nav ===== */
+        .top-nav {
+            position:fixed; top:80px; left:0; right:0; z-index:100;
+            background:rgba(255,255,255,0.97);
+            backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+            border-bottom:1px solid rgba(0,0,0,0.08);
+            display:none; flex-direction:column;
+        }
+        .top-nav.visible { display:flex; }
+        .nav-progress { height:3px; background:rgba(0,0,0,0.06); }
+        .nav-progress-fill { height:100%; background:linear-gradient(90deg,var(--coral),var(--teal)); transition:width 0.5s var(--ease-out); }
+        .nav-steps {
+            display:flex; align-items:center; justify-content:center;
+            padding:0.65rem 1rem; gap:0; overflow-x:auto;
+        }
+        .nav-step {
+            display:flex; align-items:center; gap:0.35rem;
+            padding:0.35rem 0.65rem; border:none; background:none;
+            cursor:pointer; font-family:'Heebo',sans-serif;
+            font-size:0.78rem; color:#999;
+            transition:color 0.2s ease; white-space:nowrap; border-radius:8px;
+        }
+        .nav-step:hover { color:var(--black); }
+        .nav-step.active { color:var(--teal); font-weight:700; }
+        .nav-step.completed { color:var(--teal); }
+        .nav-step-num {
+            width:22px; height:22px; border-radius:50%;
+            background:var(--teal-light); color:var(--teal);
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.68rem; font-weight:700; flex-shrink:0;
+            transition:background 0.2s,color 0.2s;
+        }
+        .nav-step.active    .nav-step-num { background:var(--teal); color:var(--white); box-shadow:0 0 0 3px rgba(0,176,155,0.25); }
+        .nav-step.completed .nav-step-num { background:var(--coral); color:var(--white); }
+        .nav-step-line { width:16px; height:1px; background:rgba(0,0,0,0.1); flex-shrink:0; }
+
+        /* ===== Main Content ===== */
+        .main-content {
+            flex:1; padding:2rem 2rem 6rem; padding-top:9.5rem;
+            max-width:var(--content-max); margin:0 auto; width:100%;
+        }
+
+        /* ===== Step ===== */
+        .step-container { position:relative; }
+        .step { display:none; }
+        .step.active { display:block; }
+        .step-header { margin-bottom:1.75rem; padding-bottom:1.25rem; border-bottom:2px solid rgba(42,157,143,0.18); }
+        .step-number { font-size:0.75rem; font-weight:700; color:var(--teal); letter-spacing:0.14em; text-transform:uppercase; }
+        .step-title { font-size:clamp(1.6rem,3vw,2.2rem); font-weight:800; margin:0.25rem 0; color:#1a1a1a; }
+        .step-desc { font-size:0.97rem; color:#555; }
+
+        /* ===== Section title ===== */
+        .section-label {
+            font-size:0.72rem; font-weight:700; letter-spacing:0.22em;
+            text-transform:uppercase; color:var(--teal);
+            margin:2rem 0 0.6rem;
+        }
+
+        /* ===== Legend strip ===== */
+        .legend-strip {
+            display:flex; gap:1.25rem; padding:0.7rem 1.1rem;
+            background:#f0faf8; border-radius:10px;
+            border:1px solid rgba(42,157,143,0.15);
+            margin:0 0 1.25rem; flex-wrap:wrap;
+        }
+        .legend-item { display:flex; align-items:center; gap:0.45rem; font-size:0.8rem; }
+        .legend-dot { width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+        .legend-dot.user   { background:var(--coral); }
+        .legend-dot.claude { background:var(--claude-border); }
+        .legend-dot.info   { background:#a8c0bc; }
+
+        /* ===== Step Cards ===== */
+        .steps-list { display:flex; flex-direction:column; gap:0.65rem; margin:0.5rem 0 1.25rem; }
+        .step-card {
+            display:flex; gap:0.9rem; align-items:flex-start;
+            padding:0.95rem 1.15rem; border-radius:14px;
+            border:1px solid rgba(0,0,0,0.06); background:#fff;
+            box-shadow:0 2px 8px rgba(0,0,0,0.03);
+            transition:box-shadow 0.2s ease;
+        }
+        .step-card:hover { box-shadow:0 4px 16px rgba(0,0,0,0.07); }
+        .step-card.user   { border-right:4px solid var(--user-border); background:#fff3f2; }
+        .step-card.claude { border-right:4px solid var(--claude-border); background:#eefaf8; }
+        .step-card.info   { border-right:4px solid var(--info-border); background:#e8f8f6; }
+        .step-card.warn   { border-right:4px solid var(--amber); background:#fffbe6; }
+
+        .step-num-badge {
+            min-width:28px; height:28px; border-radius:50%;
+            display:flex; align-items:center; justify-content:center;
+            font-size:0.75rem; font-weight:700; flex-shrink:0;
+        }
+        .step-card.user   .step-num-badge { background:var(--coral); color:#ffffff; }
+        .step-card.claude .step-num-badge { background:var(--claude-border); color:#ffffff; }
+        .step-card.info   .step-num-badge { background:var(--teal); color:#ffffff; font-style:italic; }
+        .step-card.warn   .step-num-badge { background:var(--amber); color:#fff; }
+
+        .step-card-body { flex:1; min-width:0; }
+        .step-who {
+            font-size:0.67rem; font-weight:700; letter-spacing:0.22em;
+            text-transform:uppercase; margin-bottom:0.3rem;
+        }
+        .step-card.user   .step-who { color:var(--coral-dark); }
+        .step-card.claude .step-who { color:var(--claude-border); }
+        .step-card.info   .step-who { color:var(--teal); }
+        .step-card.warn   .step-who { color:#8a6000; }
+        .step-card-body p { font-size:0.91rem; color:#222; margin:0; }
+        .step-card-body p + p { margin-top:0.4rem; }
+        .step-note { font-size:0.8rem; color:#6b8e8a; margin-top:0.35rem; font-style:italic; }
+
+        /* ===== Code ===== */
+        .code-block {
+            background:#2d2420; color:#fbf6f1;
+            padding:0.9rem 1.1rem; border-radius:10px;
+            margin:0.6rem 0;
+            font-family:'SFMono-Regular',Consolas,monospace;
+            font-size:0.8rem; line-height:1.65;
+            direction:ltr; text-align:left; overflow-x:auto;
+        }
+        .cc { color:#b09890; }
+        .ck { color:#ECBFBB; }
+        .cv { color:#8fbf8f; }
+        .ci {
+            font-family:'SFMono-Regular',Consolas,monospace;
+            font-size:0.8rem; background:#f0e8e4;
+            padding:2px 7px; border-radius:5px;
+            color:#2d2420; direction:ltr; display:inline-block;
+        }
+
+        /* ===== Callout ===== */
+        .callout { padding:0.9rem 1.1rem; border-radius:12px; margin:0.75rem 0; font-size:0.88rem; }
+        .callout.warning { background:#fdf0ec; border:1px solid #e8c0b4; color:#7a3a2e; }
+        .callout.tip     { background:#f0f5f0; border:1px solid #b4d4b4; color:#2a4a2a; }
+        .callout.amber   { background:#fffdf0; border:1px solid #e6cc88; color:#6b4d00; }
+        .callout strong  { font-weight:700; }
+        .callout ul { margin-top:6px; padding-right:16px; display:flex; flex-direction:column; gap:3px; }
+        .callout li { font-size:0.84rem; }
+
+        /* ===== Step list inside card ===== */
+        .step-list { margin-top:0.45rem; padding-right:1.1rem; display:flex; flex-direction:column; gap:0.3rem; }
+        .step-list li { font-size:0.89rem; color:#2d2420; }
+
+        /* ===== Folder structure ===== */
+        .folder-box {
+            background:#f7f3f0; border:1px solid rgba(0,0,0,0.08);
+            border-radius:10px; padding:1rem 1.2rem;
+            font-family:'SFMono-Regular',Consolas,monospace;
+            font-size:0.82rem; line-height:2; direction:ltr; text-align:left;
+            margin:0.6rem 0;
+        }
+        .folder-box .f-folder { color:#2a9d8f; font-weight:700; }
+        .folder-box .f-file   { color:#c05448; }
+        .folder-box .f-note   { color:#999; font-style:italic; }
+
+        /* ===== Screenshot + חץ מונפש ===== */
+        .screenshot-arrow-wrap {
+            position:relative; display:block;
+            border-radius:12px; overflow:visible;
+            margin:1rem 0 0.5rem;
+        }
+        .screenshot-arrow-wrap .screen-img {
+            width:100%; display:block;
+            border-radius:12px; overflow:hidden;
+            border:1px solid rgba(0,0,0,0.09);
+            box-shadow:0 4px 20px rgba(0,0,0,0.1);
+        }
+        .arrow-pin {
+            position:absolute;
+            width:52px; height:auto;
+            pointer-events:none; z-index:10;
+            animation:arrowBounce 0.85s ease-in-out infinite alternate;
+            filter:drop-shadow(2px 3px 4px rgba(0,0,0,0.25));
+        }
+        .arrow-pin.delay { animation-delay:0.42s; }
+        @keyframes arrowBounce {
+            from { transform:translate(0,0) scale(1); }
+            to   { transform:translate(-7px,-11px) scale(1.06); }
+        }
+
+        /* ===== Screenshot placeholder ===== */
+        .screenshot-placeholder {
+            border:2px dashed rgba(42,157,143,0.3);
+            border-radius:12px;
+            min-height:140px; display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            gap:0.5rem; padding:1.5rem; margin:0.8rem 0;
+            color:rgba(42,157,143,0.6); font-size:0.82rem; text-align:center;
+            background:rgba(42,157,143,0.03);
+        }
+        .screenshot-placeholder .ph-icon { font-size:1.6rem; opacity:0.5; }
+
+        /* ===== Phase badge ===== */
+        .phase-badge {
+            display:inline-block; padding:3px 12px;
+            background:rgba(42,157,143,0.1); color:var(--teal);
+            border-radius:50px; font-size:0.72rem; font-weight:700;
+            letter-spacing:0.05em; margin-bottom:0.5rem;
+        }
+
+        /* ===== Checklist ===== */
+        .checklist-progress { font-size:0.83rem; color:var(--teal); font-weight:600; margin-bottom:0.75rem; }
+        .checklist { display:flex; flex-direction:column; gap:0.45rem; margin:0.5rem 0; }
+        .check-section { font-size:0.72rem; font-weight:700; letter-spacing:0.18em; text-transform:uppercase; color:var(--teal); margin:1.2rem 0 0.5rem; }
+        .check-item {
+            display:flex; align-items:flex-start; gap:0.7rem;
+            padding:0.8rem 1rem; border:1px solid rgba(0,0,0,0.06);
+            border-radius:12px; cursor:pointer;
+            transition:opacity 0.3s ease, background 0.15s ease;
+        }
+        .check-item:hover { background:rgba(0,0,0,0.01); }
+        .check-item.checked { opacity:0.5; }
+        .check-box {
+            width:22px; height:22px; border:2px solid rgba(0,0,0,0.14);
+            border-radius:6px; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;
+            transition:background 0.2s, border-color 0.2s; margin-top:2px;
+        }
+        .check-item.checked .check-box { background:var(--teal); border-color:var(--teal); }
+        .check-box svg { width:14px; height:14px; stroke:#fff; stroke-width:3; fill:none; opacity:0; transition:opacity 0.2s; }
+        .check-item.checked .check-box svg { opacity:1; }
+        .check-content { font-size:0.91rem; color:#2d2420; }
+
+        /* ===== Bottom Nav ===== */
+        .bottom-nav {
+            position:fixed; bottom:0; left:0; right:0; z-index:200;
+            display:none; align-items:center; justify-content:space-between;
+            padding:0.9rem 2rem;
+            background:rgba(255,255,255,0.97);
+            backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+            border-top:1px solid rgba(0,0,0,0.06);
+        }
+        .bottom-nav.visible { display:flex; }
+        .nav-btn {
+            padding:10px 28px; border-radius:50px;
+            font-family:'Heebo',sans-serif; font-size:0.88rem; font-weight:600;
+            cursor:pointer; border:2px solid var(--black);
+            background:none; color:var(--black);
+            transition:transform 0.15s var(--spring),box-shadow 0.2s;
+        }
+        .nav-btn.primary { background:var(--teal); color:var(--white); border-color:var(--teal); }
+        .nav-btn:hover   { box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+        .nav-btn:active  { transform:scale(0.97); }
+        .nav-btn.hidden  { visibility:hidden; }
+        .nav-dots { display:flex; gap:6px; }
+        .nav-dot {
+            width:8px; height:8px; border-radius:50%;
+            background:rgba(0,0,0,0.14); border:none; cursor:pointer;
+            transition:background 0.2s, transform 0.2s var(--spring);
+        }
+        .nav-dot.active { background:var(--teal); transform:scale(1.3); }
+
+        /* ===== Reveal ===== */
+        .reveal { opacity:0; transform:translateY(18px); transition:opacity 0.5s var(--ease-out),transform 0.5s var(--ease-out); }
+        .reveal.visible { opacity:1; transform:translateY(0); }
+
+        /* ===== Verification Modal ===== */
+        .v-overlay {
+            position:fixed; inset:0; z-index:800; display:none;
+            align-items:center; justify-content:center; padding:1rem;
+            background:rgba(0,0,0,0.35); backdrop-filter:blur(5px);
+        }
+        .v-overlay.open { display:flex; }
+        .v-card {
+            background:#fff; border-radius:22px; padding:2.25rem 2rem;
+            max-width:460px; width:100%;
+            box-shadow:0 24px 64px rgba(0,0,0,0.22);
+            text-align:center;
+            animation:popIn 0.4s var(--spring) both;
+        }
+        @keyframes popIn { from { opacity:0; transform:scale(0.84) translateY(20px); } to { opacity:1; transform:scale(1) translateY(0); } }
+        .v-icon  { font-size:2.8rem; margin-bottom:0.75rem; }
+        .v-label { font-size:0.7rem; font-weight:700; color:var(--teal); letter-spacing:0.22em; text-transform:uppercase; margin-bottom:0.6rem; }
+        .v-q     { font-size:1.05rem; font-weight:700; line-height:1.55; margin-bottom:1.5rem; color:var(--black); }
+        .v-actions { display:flex; flex-direction:column; gap:0.65rem; }
+        .v-btn {
+            padding:12px 24px; border-radius:50px;
+            font-family:'Heebo',sans-serif; font-size:0.93rem; font-weight:600;
+            cursor:pointer; border:none;
+            transition:transform 0.15s var(--spring),box-shadow 0.2s;
+        }
+        .v-btn.yes  { background:var(--teal); color:var(--white); }
+        .v-btn.yes:hover  { box-shadow:0 6px 20px rgba(42,157,143,0.35); }
+        .v-btn.back { background:none; border:2px solid rgba(0,0,0,0.14); color:#777; font-size:0.85rem; }
+        .v-btn:active { transform:scale(0.97); }
+
+        /* ===== Completion ===== */
+        .completion {
+            display:none; min-height:100vh;
+            align-items:center; justify-content:center;
+            text-align:center; padding:2rem;
+            background:linear-gradient(135deg,#faf8f6 0%,#f5ece4 100%);
+        }
+        .completion.visible { display:flex; flex-direction:column; }
+        .completion-content { max-width:520px; }
+        .completion-emoji { font-size:4rem; margin-bottom:1.25rem; display:block; }
+        .completion h2 { font-size:clamp(2rem,5vw,3rem); font-weight:900; margin-bottom:0.75rem; }
+        .completion p  { font-size:1.05rem; color:#555; margin-bottom:2rem; }
+        .completion-actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+        .completion-btn {
+            padding:12px 30px; border-radius:50px;
+            font-family:'Heebo',sans-serif; font-size:0.97rem; font-weight:600;
+            cursor:pointer; border:2px solid var(--black); text-decoration:none;
+            transition:transform 0.15s var(--spring),box-shadow 0.2s;
+        }
+        .completion-btn.primary   { background:var(--teal); color:var(--white); border-color:var(--teal); }
+        .completion-btn.secondary { background:none; color:var(--teal); border-color:var(--teal); }
+        .completion-btn:hover  { box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+        .completion-btn:active { transform:scale(0.97); }
+
+        /* ===== Flip Cards ===== */
+        .flip-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .flip-card {
+            perspective: 1000px;
+            height: 220px;
+            cursor: pointer;
+        }
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s ease;
+            transform-style: preserve-3d;
+        }
+        .flip-card:hover .flip-card-inner,
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(-180deg);
+        }
+        .flip-front, .flip-back {
+            position: absolute;
+            inset: 0;
+            backface-visibility: hidden;
+            border-radius: 16px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            border: 1px solid rgba(255,255,255,0.3);
+            box-shadow: 0 4px 24px rgba(0,0,0,0.06);
+        }
+        .flip-front {
+            background: linear-gradient(135deg,rgba(0,176,155,0.12),rgba(205,78,156,0.1));
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.45);
+        }
+        .flip-front .flip-icon { font-size:2.5rem; margin-bottom:0.75rem; }
+        .flip-front h4 { font-size:1.2rem; font-weight:700; margin-bottom:0.4rem; color:var(--black); }
+        .flip-front p  { font-size:0.92rem; color:#444; line-height:1.5; }
+        .flip-back {
+            transform: rotateY(180deg);
+            border: none;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+            font-size:0.97rem; color:#fff; line-height:1.7;
+        }
+        .flip-card:nth-child(1) .flip-back { background:#0d7c70; }
+        .flip-card:nth-child(2) .flip-back { background:#b85e3f; }
+        .flip-card:nth-child(3) .flip-back { background:#b07030; }
+        .flip-card:nth-child(4) .flip-back { background:#1a6060; }
+        .flip-hint { font-size:0.72rem; color:#999; margin-top:auto; }
+        .skills-section-title {
+            font-size:1.6rem; font-weight:800; letter-spacing:0;
+            text-transform:none; color:var(--black);
+            margin:2.5rem 0 0.5rem;
+            border-right:4px solid var(--teal);
+            padding-right:0.9rem;
+            line-height:1.3;
+        }
+        .skills-section-title span { color:var(--teal); }
+
+        /* ===== Skills Grid Cards ===== */
+        .skills-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 1.25rem;
+            margin: 1.5rem 0;
+        }
+        .skill-card {
+            perspective: 1000px;
+            height: 280px;
+            cursor: pointer;
+        }
+        .skill-card-inner {
+            position: relative; width: 100%; height: 100%;
+            transition: transform 0.6s ease;
+            transform-style: preserve-3d;
+        }
+        .skill-card:hover .skill-card-inner { transform: rotateY(-180deg); }
+        .skill-front, .skill-back {
+            position: absolute; inset: 0;
+            backface-visibility: hidden;
+            border-radius: 16px; padding: 1.5rem;
+            display: flex; flex-direction: column;
+        }
+        .skill-front {
+            background: linear-gradient(145deg,rgba(255,255,255,0.9),rgba(0,176,155,0.08));
+            border: 1px solid rgba(0,0,0,0.06);
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        .skill-tag {
+            display:inline-block; font-size:0.72rem; padding:3px 10px;
+            border-radius:50px; font-weight:600; margin-bottom:0.75rem; align-self:flex-start;
+        }
+        .skill-tag.recommended { background:rgba(219,119,87,0.15); color:#db7757; }
+        .skill-tag.design      { background:rgba(219,119,87,0.12); color:#b85e3f; }
+        .skill-tag.animation   { background:rgba(0,176,155,0.12); color:#0d7c70; }
+        .skill-tag.components  { background:rgba(196,181,253,0.3); color:#5b21b6; }
+        .skill-tag.polish      { background:rgba(245,180,0,0.2); color:#b07800; }
+        .skill-tag.check       { background:rgba(0,176,155,0.12); color:#0d7c70; }
+        .skill-tag.video       { background:rgba(252,165,165,0.3); color:#991b1b; }
+        .skill-tag.interactions{ background:rgba(0,176,155,0.15); color:#0d7c70; }
+        .skill-front h4 { font-size:1.1rem; margin-bottom:0.5rem; }
+        .skill-front p  { font-size:0.85rem; color:#666; flex:1; }
+        .skill-back {
+            transform: rotateY(180deg);
+            background:#1a1a2e; color:#e2e8f0;
+            font-size:0.85rem; justify-content:space-between;
+        }
+        .skill-back h4  { color:#db7757; font-size:1rem; margin-bottom:0.5rem; }
+        .skill-back p   { font-size:0.82rem; line-height:1.6; flex:1; }
+        .skill-back .skill-link {
+            display:inline-block; margin-top:0.5rem; padding:6px 16px;
+            background:#db7757; color:#fff; border-radius:50px;
+            font-size:0.82rem; font-weight:600; text-decoration:none;
+            direction:ltr; transition:background 0.2s;
+        }
+        .skill-back .skill-link:hover { background:#c0634a; }
+
+        /* ===== Arrow float animation ===== */
+        @keyframes arrowFloat {
+            0%, 100% { transform: translateY(0px); }
+            50%       { transform: translateY(-6px); }
+        }
+        .arrow-float { animation: arrowFloat 1.6s ease-in-out infinite; }
+
+        /* ===== Responsive ===== */
+        @media (max-width:768px) {
+            .nav-step span:not(.nav-step-num) { display:none; }
+            .nav-step-line { width:8px; }
+            .main-content { padding:1.5rem 1rem 6rem; padding-top:9rem; }
+        }
+        @media (prefers-reduced-motion:reduce) {
+            *, *::before, *::after { animation-duration:0.01ms !important; transition-duration:0.01ms !important; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<section class="hero" id="hero">
+    <div class="logo-bar">
+        <img src="LetsAIlogo.svg" alt="Let's AI">
+    </div>
+    <video class="hero-video" autoplay muted loop playsinline preload="auto">
+        <source src="assets/videos/kling_intro.mp4" type="video/mp4">
+    </video>
+    <div class="hero-overlay"></div>
+    <div class="hero-side-fade left"></div>
+    <div class="hero-side-fade right"></div>
+    <div class="hero-content">
+        <div class="hero-badge">מדריך מעשי · 5 פאזות · Let's AI</div>
+        <h1>בניית אתר עם<br><span style="display:inline-flex;align-items:center;gap:0.4rem;color:#db7757;white-space:nowrap;font-size:1.2em;"><img src="assets/images/claude%20code.svg" alt="Claude Code" style="height:1em;width:auto;vertical-align:middle;">Claude Code</span><br>מ-א׳ עד ת׳</h1>
+        <p>אתר מלא עם מסד נתונים וצ׳אטבוט AI —<br>כשקלוד קוד עושה את הקוד ואת מנהלת את התהליך</p>
+        <button class="hero-btn" onclick="startTutorial()">בואו נתחיל ←</button>
+    </div>
+</section>
+
+<!-- ===== App ===== -->
+<div class="app" id="app">
+
+    <div class="logo-bar app-logo-bar">
+        <img src="LetsAIlogo.svg" alt="Let's AI">
+    </div>
+
+    <nav class="top-nav" id="topNav">
+        <div class="nav-progress">
+            <div class="nav-progress-fill" id="navProgressFill" style="width:12.5%"></div>
+        </div>
+        <div class="nav-steps">
+            <button class="nav-step active" onclick="goToStep(1)">
+                <span class="nav-step-num">0</span><span>נקודת פתיחה</span>
+            </button>
+            <div class="nav-step-line"></div>
+            <button class="nav-step" onclick="goToStep(2)">
+                <span class="nav-step-num">1א</span><span>Supabase</span>
+            </button>
+            <div class="nav-step-line"></div>
+            <button class="nav-step" onclick="goToStep(3)">
+                <span class="nav-step-num">1ב</span><span>תשתית</span>
+            </button>
+            <div class="nav-step-line"></div>
+            <button class="nav-step" onclick="goToStep(4)">
+                <span class="nav-step-num">2</span><span>עיצוב</span>
+            </button>
+            <div class="nav-step-line"></div>
+            <button class="nav-step" onclick="goToStep(5)">
+                <span class="nav-step-num">3</span><span>צ׳אטבוט</span>
+            </button>
+            <div class="nav-step-line"></div>
+            <button class="nav-step" onclick="goToStep(6)">
+                <span class="nav-step-num">4</span><span>אבטחה</span>
+            </button>
+            <div class="nav-step-line"></div>
+            <button class="nav-step" onclick="goToStep(7)">
+                <span class="nav-step-num">5</span><span>פרסום</span>
+            </button>
+            <div class="nav-step-line"></div>
+            <button class="nav-step" onclick="goToStep(8)">
+                <span class="nav-step-num">✓</span><span>סיכום</span>
+            </button>
+        </div>
+    </nav>
+
+    <div class="app-body">
+        <main class="main-content">
+            <div class="step-container">
+
+                <!-- ══════════════════════════════════════
+                     שלב 0 — נקודת פתיחה
+                ══════════════════════════════════════ -->
+                <div class="step active" id="step1">
+                    <div class="step-header">
+                        <span class="step-number">שלב 0</span>
+                        <h2 class="step-title">נקודת הפתיחה — מה מכינים מראש</h2>
+                        <p class="step-desc">לפני שמתחילים, יש להכין את כל החומרים — קבצי תכנון, עיצוב ותמונות</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="legend-strip">
+                            <div class="legend-item"><div class="legend-dot user"></div><span><strong>אתם עושים</strong> — פעולה ידנית</span></div>
+                            <div class="legend-item"><div class="legend-dot claude"></div><span><strong>קלוד עושה</strong> — ממתינים</span></div>
+                            <div class="legend-item"><div class="legend-dot info"></div><span><strong>הסבר / מידע</strong></span></div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label" style="display:flex;align-items:center;gap:0.6rem;">
+                            <img src="assets/images/claude%20code.svg" alt="Claude Code" style="height:28px;width:auto;">
+                            מה זה Claude Code?
+                        </div>
+                        <div class="steps-list">
+                            <div class="step-card info">
+                                <div class="step-num-badge">i</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">Claude Code — כלי CLI של Anthropic</div>
+                                    <p>קלוד קוד פועל בטרמינל ומחובר לאפליקציית Claude Desktop. הוא קורא את קבצי הפרויקט, כותב קוד, מריץ פקודות ובונה פיצ׳רים — בהנחייה שלכם. אתם לא כותבים שורת קוד אחת.</p>
+                                </div>
+                            </div>
+                            <div class="step-card info">
+                                <div class="step-num-badge">i</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">שני שחקנים בכל פאזה</div>
+                                    <p><strong style="color:var(--coral-dark)">את</strong> — פותחת חשבונות, מעתיקה מפתחות, מתארת מה לבנות ומאשרת תוצאות.<br><strong style="color:var(--claude-border)">קלוד קוד</strong> — בונה את הכל: Next.js, Supabase, Groq, Vercel.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">מכינים מראש — לפני שמתחילים</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">1</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — תיקיית הפרויקט</div>
+                                    <p>צרו תיקיה חדשה לפרויקט (באנגלית, ללא רווחים) והכניסו אליה את הקבצים הבאים:</p>
+                                    <div class="folder-box">
+<span class="f-folder">my-project/</span><br>
+├── <span class="f-file">plan.md</span>         <span class="f-note">← התוכנית הראשית</span><br>
+├── <span class="f-file">phase1.md</span>       <span class="f-note">← פאזה 1 — Supabase</span><br>
+├── <span class="f-file">phase2.md</span>       <span class="f-note">← פאזה 2 — עיצוב</span><br>
+├── <span class="f-file">phase3.md</span>       <span class="f-note">← פאזה 3 — Groq</span><br>
+├── <span class="f-file">phase4.md</span>       <span class="f-note">← פאזה 4 — אבטחה</span><br>
+├── <span class="f-file">phase5.md</span>       <span class="f-note">← פאזה 5 — פרסום</span><br>
+└── <span class="f-file">design.md</span>       <span class="f-note">← קובץ העיצוב</span>
+                                    </div>
+                                    <p class="step-note">קבצי הפאזות מכילים הוראות מפורטות לקלוד — הוא יקרא וידע בדיוק מה לבנות</p>
+                                </div>
+                            </div>
+
+                            <div class="step-card user">
+                                <div class="step-num-badge">2</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — קובץ design.md</div>
+                                    <p>הכינו קובץ <span class="ci">design.md</span> עם כל הגדרות העיצוב של האתר. ניתן ליצור אותו באחת מהדרכים:</p>
+                                    <ul class="step-list">
+                                        <li>יצרתם ב-<strong>Claude Design</strong> / Google Stitch / כל מודל שפה</li>
+                                        <li>בקשתם מקלוד קוד: <em>"תכין לי design.md על סמך התמונה הזו"</em></li>
+                                    </ul>
+                                </div>
+                            </div>
+
+                            <div class="step-card user">
+                                <div class="step-num-badge">3</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — תמונות ולוגו</div>
+                                    <p>אספו מראש את הנכסים הויזואליים של האתר:</p>
+                                    <ul class="step-list">
+                                        <li><strong>לוגו</strong> — PNG עם רקע שקוף</li>
+                                        <li><strong>תמונת Hero</strong> — תמונה גדולה לחלק העליון</li>
+                                        <li><strong>תמונת פרופיל</strong> — תמונה של בעל/ת העסק</li>
+                                        <li><strong>תמונות שירותים</strong> — לכל קטגוריה</li>
+                                    </ul>
+                                    <p class="step-note">קלוד יקרא אותן ישירות מתיקיית public/ שייצור</p>
+                                </div>
+                            </div>
+
+                            <div class="step-card info">
+                                <div class="step-num-badge">i</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">כל הכלים — חינמיים</div>
+                                    <p>כל הכלים בתהליך זה <strong>חינמיים לשימוש בסיסי</strong>: Next.js, Supabase, Groq, Vercel, GitHub. אין צורך בכרטיס אשראי לשלבים הבסיסיים.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">פתיחת פרויקט ב-Claude Code</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">4</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>פתחו את <strong>Claude Desktop</strong>, עדכנו שעובדים לוקאלית ותנו לקלוד את שם תיקיית הפרויקט</p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — Plan Mode</div>
+                                    <p>תנו לקלוד את <strong>plan.md</strong> ואת <strong>phase1.md</strong> — במצב <strong>Plan Mode</strong></p>
+                                    <p class="step-note">בשלב זה קלוד רק קורא ומבין — כותב לעצמו תוכנית עבודה. הוא עדיין לא בונה כלום</p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">6</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>קראו את התוכנית שקלוד כתב — ולחצו <strong>Accept</strong> לאשר לו לצאת לעבוד</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     שלב 1א — Supabase
+                ══════════════════════════════════════ -->
+                <div class="step" id="step2">
+                    <div class="step-header">
+                        <span class="step-number">פאזה 1 · שלב א׳</span>
+                        <h2 class="step-title">פתיחת חשבון Supabase</h2>
+                        <p class="step-desc">יוצרים פרויקט Supabase ומעבירים את מפתחות הגישה לפרויקט</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="callout tip">
+                            <strong>💡 במקביל:</strong> בזמן שקלוד קוד בונה את התשתית — פתחו חשבון Supabase. שני הדברים קורים בו זמנית.
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">פתיחת חשבון ופרויקט</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">1</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>גשו ל-<a href="https://supabase.com/" target="_blank" class="ci">supabase.com</a> ולחצו <strong>Start your project</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">2</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>הירשמו עם כתובת <strong>מייל</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">3</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>לחצו <strong>New project</strong>, תנו שם והגדירו סיסמה. לחצו <strong>Create new project</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">4</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>המתינו כ-2 דקות עד שהפרויקט מוכן — הדף יתרענן אוטומטית</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">העתקת מפתחות — כפתור Connect</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — כפתור ירוק Connect</div>
+                                    <p>בדשבורד של הפרויקט — לחצו על הכפתור הירוק <strong>Connect</strong> הנמצא ליד שם הפרויקט</p>
+                                    <p class="step-note">החלונית נפתחת בפינה התחתונה ומכילה את כל פרטי החיבור וכפתור Copy אחד</p>
+                                    <div style="position:relative;margin-top:0.8rem;">
+                                        <img src="assets/images/1connectsupabase.png" alt="כפתור Connect ב-Supabase" style="width:100%;border-radius:12px;display:block;">
+                                        <div class="arrow-float" style="position:absolute;top:8px;left:calc(50% - 30px);"><img src="assets/images/arrow.png" alt="arrow" style="width:60px;height:auto;display:block;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">6</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>לחצו <strong>Copy</strong> בחלונית — <strong>כל המפתחות מועתקים בבת אחת</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">7</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — הדבקה ב-.env.local</div>
+                                    <p>פתחו את קובץ <span class="ci">.env.local</span> ב-Notepad / VS Code / Cursor, הדביקו (Ctrl+V) ושמרו (Ctrl+S)</p>
+                                    <div class="code-block"><span class="ck">NEXT_PUBLIC_SUPABASE_URL</span>=<span class="cv">https://xxxx.supabase.co</span>
+<span class="ck">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>=<span class="cv">sb_publishable_...</span>
+<span class="ck">SUPABASE_SERVICE_ROLE_KEY</span>=<span class="cv">sb_secret_...</span></div>
+                                    <div class="callout warning">
+                                        <strong>🔐 service_role key — לעולם לא ל-GitHub!</strong> מפתח זה עוקף את כל האבטחה. הוא ישב רק ב-.env.local שנמצא ב-.gitignore.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     שלב 1ב — קלוד בונה תשתית
+                ══════════════════════════════════════ -->
+                <div class="step" id="step3">
+                    <div class="step-header">
+                        <span class="step-number">פאזה 1 · שלב ב׳</span>
+                        <h2 class="step-title">קלוד בונה את התשתית</h2>
+                        <p class="step-desc">קלוד מקים את הפרויקט ויוצר את הטבלאות בסופהבייס</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="steps-list">
+                            <div class="step-card claude">
+                                <div class="step-num-badge">1</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">קלוד — פרויקט בסיסי</div>
+                                    <p>מאתחל Next.js + TypeScript + Tailwind ויוצר את מבנה הקבצים:</p>
+                                    <div class="code-block"><span class="cc">.env.local    ← שורות מוכנות למילוי</span>
+<span class="cc">.env.example  ← ערכים ריקים — יועלה ל-GitHub</span>
+<span class="cc">.gitignore    ← מכיל .env.local (לא יעלה לגיט)</span></div>
+                                </div>
+                            </div>
+                            <div class="step-card claude">
+                                <div class="step-num-badge">2</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">קלוד — מסד הנתונים</div>
+                                    <p>כותב SQL ויוצר את הטבלאות ישירות ב-Supabase:</p>
+                                    <ul class="step-list">
+                                        <li>CREATE TABLE + INSERT נתוני בסיס</li>
+                                        <li>שומר את הסכמה בקובץ <span class="ci">supabase/schema.sql</span></li>
+                                        <li>כותב פונקציות גישה לנתונים בצד הקוד</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">3</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — אופציונלי</div>
+                                    <p>בדקו שהטבלאות נוצרו: פתחו את Supabase, בחרו בתפריט השמאלי את <strong>Table Editor</strong></p>
+                                    <p class="step-note">תוכלו לראות את כל הטבלאות שקלוד בנה — שמות, עמודות, נתוני בסיס</p>
+                                    <div style="position:relative;margin-top:0.8rem;">
+                                        <img src="assets/images/2tableeditor.png" alt="Table Editor ב-Supabase" style="width:100%;border-radius:12px;display:block;">
+                                        <div class="arrow-float" style="position:absolute;top:23%;left:31%;"><img src="assets/images/arrow.png" alt="arrow" style="transform:rotate(30deg);width:60px;height:auto;display:block;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     שלב 2 — עיצוב ובניית האתר
+                ══════════════════════════════════════ -->
+                <div class="step" id="step4">
+                    <div class="step-header">
+                        <span class="step-number">פאזה 2</span>
+                        <h2 class="step-title">עיצוב ובניית האתר</h2>
+                        <p class="step-desc">מכינים קובץ עיצוב ותמונות — Claude Code בונה את כל האתר על פיהם</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">הכנת חומרי העיצוב</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">1</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>העבירו את כל התמונות שהכנתם מראש לתיקיית <span class="ci">public/</span> בפרויקט — לוגו, תמונות סדנאות, תמונת פרופיל</p>
+                                    <p class="step-note">תנו לתמונות שמות באנגלית ללא רווחים — לדוגמה: logo.png, hero.jpg, about.jpg</p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">2</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — Plan Mode</div>
+                                    <p>פתחו Plan Mode ובקשו:</p>
+                                    <div class="callout tip">
+                                        <em>"תקרא את design.md ותכנן את בניית האתר לפי התמונות שב-public/"</em>
+                                    </div>
+                                    <p>קראו את התוכנית ואשרו — קלוד מתחיל לבנות</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">קלוד בונה את האתר</div>
+                        <div class="steps-list">
+                            <div class="step-card claude">
+                                <div class="step-num-badge">3</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">קלוד</div>
+                                    <p>קורא design.md + כל התמונות ב-public/ ובונה את כל קומפוננטי הדף:</p>
+                                    <div class="code-block"><span class="cc">ניווט עליון (Header)</span>
+<span class="cc">סקשן פתיח (Hero)</span>
+<span class="cc">סקשן אודות (About)</span>
+<span class="cc">סקשן שירותים / מוצרים</span>
+<span class="cc">טופס השארת פרטים ← מחובר ל-Supabase</span>
+<span class="cc">כותרת תחתונה (Footer)</span></div>
+                                </div>
+                            </div>
+                            <div class="step-card claude">
+                                <div class="step-num-badge">4</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">קלוד</div>
+                                    <p>מגדיר פונטים, RTL עברית, ואנימציות לפי העיצוב. מחבר טופס השארת פרטים לטבלת leads ב-Supabase</p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>צופים בתצוגה המקדימה שקלוד פותח ב-<span class="ci">localhost:3000</span> ומבקשים תיקונים:</p>
+                                    <ul class="step-list">
+                                        <li>"שנה את הצבע", "הגדל את הכותרת"</li>
+                                        <li>"הוסף אנימציה", "שנה את הפריסה"</li>
+                                    </ul>
+                                    <p class="step-note">כשמרוצים — ממשיכים לפאזה הבאה</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שדרוג עיצוב — כלים מומלצים</div>
+                        <div class="steps-list">
+                            <div class="step-card info">
+                                <div class="step-num-badge">✨</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">Skills של Claude Code</div>
+                                    <p>ניתן להפעיל סקילים להוספת אנימציות ושיפורי עיצוב אוטומטיים: <span class="ci">/animate</span> &nbsp; <span class="ci">/polish</span> &nbsp; <span class="ci">/bolder</span></p>
+                                </div>
+                            </div>
+                            <div class="step-card info">
+                                <div class="step-num-badge">✨</div>
+                                <div class="step-card-body">
+                                    <div class="step-who"><a href="https://21st.dev/home" target="_blank" style="color:inherit;text-decoration:none;">21st.dev</a></div>
+                                    <p>ספריית קומפוננטות מוכנות ואיכותיות. בחרו קומפוננטה, לחצו <strong>Copy Prompt</strong> — והדביקו לקלוד את הפרומפט המועתק</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     שלב 3 — Groq Chatbot
+                ══════════════════════════════════════ -->
+                <div class="step" id="step5">
+                    <div class="step-header">
+                        <span class="step-number">פאזה 3</span>
+                        <h2 class="step-title">צ׳אטבוט AI עם Groq</h2>
+                        <p class="step-desc">פתיחת חשבון Groq, קובץ ידע, ו-Claude Code בונה את כל הצ׳אטבוט</p>
+                        <p class="step-note" style="margin-top:0.6rem;">זוהי דוגמה בלבד. לשימוש נרחב כדאי להביא מפתחות API ממודלי שפה כמו Gemini דרך Google AI Studio — הדורשים תשלום.</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב א׳ — פתיחת חשבון Groq וקבלת API Key</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">1</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>גשו ל-<span class="ci">console.groq.com</span> ולחצו <strong>Sign Up</strong> (חינמי)</p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">2</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>לאחר הכניסה: פתחו את תפריט שמאל, בחרו <strong>API Keys</strong> ולחצו <strong>Create API Key</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">3</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — חשוב!</div>
+                                    <p>תנו שם ולחצו <strong>Submit</strong> — <strong>העתיקו את המפתח מיד!</strong></p>
+                                    <p>המפתח מוצג <strong>פעם אחת בלבד</strong>. הוא נראה כך: <span class="ci">gsk_...</span></p>
+                                    <img src="assets/images/3groqapi.png" alt="Groq Console — יצירת API Key" style="width:100%;border-radius:12px;margin-top:0.8rem;display:block;">
+                                    <div style="position:relative;margin-top:0.8rem;">
+                                        <img src="assets/images/4apigroq.png" alt="Groq Console — המפתח לאחר יצירה" style="width:100%;border-radius:12px;display:block;">
+                                        <div class="arrow-float" style="position:absolute;top:35%;right:8%;"><img src="assets/images/arrow.png" alt="arrow" style="transform:rotate(225deg);width:55px;height:auto;display:block;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב ב׳ — קובץ הידע של הצ׳אטבוט (services.md)</div>
+                        <div class="steps-list">
+                            <div class="step-card info">
+                                <div class="step-num-badge">i</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">למה services.md?</div>
+                                    <p>הצ׳אטבוט עונה <strong>רק</strong> על בסיס קובץ הידע שתכתבו — לא ממציא מידע שאינו שם. זה מונע הבטחות שגויות למבקרים.</p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">4</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — כתיבת services.md</div>
+                                    <p>צרו קובץ <span class="ci">services.md</span> בתיקיית הפרויקט וכתבו את כל המידע שהצ׳אטבוט מורשה לענות עליו:</p>
+                                    <ul class="step-list">
+                                        <li>שמות שירותים, מחירים, משך, גודל קבוצה, מה כלול</li>
+                                        <li>איך להירשם</li>
+                                        <li>מה הצ׳אטבוט <strong>לא</strong> עונה: <em>"אל תבטיח מועדים"</em></li>
+                                    </ul>
+                                    <div class="code-block"><span class="ck">## ציור אינטואיטיבי</span>
+<span class="cv">- מחיר: 280 ₪</span> | משך: שעתיים | עד 12 משתתפות
+
+<span class="ck">## הנחיות לצ׳אטבוט</span>
+<span class="cc">- אל תבטיח מועדים ספציפיים</span>
+<span class="cc">- אל תענה על שאלות שלא קשורות לסדנאות</span></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב ג׳ — בניית הצ׳אטבוט</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — Plan Mode</div>
+                                    <p>פתחו Plan Mode ותנו לקלוד את <span class="ci">phase3.md</span> — הוא כבר מכיל את כל ההוראות</p>
+                                    <div class="callout tip">
+                                        <em>"תקרא את phase3.md ותכנן פאזה 3"</em>
+                                    </div>
+                                    <p>קראו את התוכנית ואשרו — קלוד מתחיל לבנות. כשיבקש Groq API Key — הדביקו בקובץ <span class="ci">.env.local</span>:</p>
+                                    <div class="code-block"><span class="ck">GROQ_API_KEY</span>=<span class="cv">gsk_...</span></div>
+                                </div>
+                            </div>
+                            <div class="step-card claude">
+                                <div class="step-num-badge">6</div>
+                                <div class="step-card-body">
+                                    <div class="step-who" style="display:flex;align-items:center;gap:0.6rem;">
+                                        <img src="assets/images/chatbot.svg" alt="Chatbot" style="height:24px;width:auto;">
+                                        קלוד
+                                    </div>
+                                    <p>קלוד בונה צ׳אטבוט:</p>
+                                    <ul class="step-list">
+                                        <li>ChatbotWidget — כפתור עגול + חלון שיחה RTL עברי</li>
+                                        <li>API route שרתי — המפתח לא נחשף לדפדפן</li>
+                                        <li>חיבור ל-Groq + קריאת services.md לפרומפט</li>
+                                        <li>שמירת היסטוריית שיחה ב-React state</li>
+                                    </ul>
+                                    <div style="display:flex;align-items:center;gap:1.5rem;margin-top:0.8rem;">
+                                        <img src="assets/images/chatbot.svg" alt="Chatbot" style="width:240px;height:auto;flex-shrink:0;">
+                                        <img src="assets/images/5chatbot.png" alt="ווידג׳ט הצ׳אטבוט פועל באתר" style="flex:1;min-width:0;border-radius:12px;display:block;">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">7</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — אופציונלי: אייקון</div>
+                                    <p>הכינו אייקון בפורמט <strong>SVG בלבד</strong> עם רקע שקוף (Canva או מודל תמונה). שמרו ב-<span class="ci">public/chatbotimg.svg</span> וציינו לקלוד: <em>"השתמש ב-chatbotimg.svg בכפתור"</em></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     שלב 4 — אבטחה ושמירת שיחות
+                ══════════════════════════════════════ -->
+                <div class="step" id="step6">
+                    <div class="step-header">
+                        <span class="step-number">פאזה 4</span>
+                        <h2 class="step-title">אבטחה ושמירת שיחות</h2>
+                        <p class="step-desc">מעבירים את ה-Groq API Key לכספת מוצפנת ב-Supabase ומוסיפים שמירת שיחות</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">1</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — Plan Mode</div>
+                                    <p>בקשו:</p>
+                                    <div class="callout tip">
+                                        <em>"תכנן פאזה 4 — אבטחת המפתח ושמירת שיחות עם הסכמה"</em>
+                                    </div>
+                                    <p>אשרו את התוכנית — קלוד מתחיל לעבוד. אחרי שסיים — בצעו את השלבים הבאים:</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב א׳ — שמירת Groq API Key ב-Supabase Vault</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">2</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>פתחו את <a href="https://supabase.com/" target="_blank" class="ci">Supabase</a>, בחרו בתפריט השמאלי <strong>Vault</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">3</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>בחרו בלשונית <strong>Secrets</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">4</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>לחצו <strong>Add new secret</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>בשדה <strong>Name</strong> כתבו: <span class="ci">groq_api_key</span></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">6</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — חשוב</div>
+                                    <p>בשדה <strong>Secret</strong> הדביקו את מפתח ה-Groq מפאזה 3 — נראה כך: <span class="ci">gsk_...</span></p>
+                                    <img src="assets/images/6secretvault.png" alt="Vault ב-Supabase — הוספת Secret" style="width:100%;border-radius:12px;margin-top:0.8rem;display:block;">
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">7</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>לחצו <strong>Save</strong> — המפתח נשמר מוצפן ב-Vault</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב ב׳ — הוספת Service Role Key</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>פתחו את Supabase, בחרו בתפריט השמאלי <strong>Settings</strong> ואז <strong>API</strong>. תחת Project API Keys העתיקו את <strong>service_role (secret)</strong></p>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">6</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>פתחו <span class="ci">.env.local</span>, הוסיפו את השורה ושמרו Ctrl+S:</p>
+                                    <div class="code-block"><span class="ck">SUPABASE_SERVICE_ROLE_KEY</span>=<span class="cv">sb_secret_...</span></div>
+                                    <div class="callout warning">
+                                        <strong>🔐 service_role key — לעולם לא ל-GitHub!</strong> הוא ישב רק ב-.env.local שנמצא ב-.gitignore.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-card claude">
+                                <div class="step-num-badge">7</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">קלוד — כבר עשה</div>
+                                    <p>בנה configRepository ששולף Groq key מ-Vault, יצר טבלאות שיחות ב-Supabase, הוסיף checkbox הסכמה לצ׳אטבוט — שמירה רק כשהמשתמש הסכים במפורש</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     שלב 5 — פרסום לאינטרנט
+                ══════════════════════════════════════ -->
+                <div class="step" id="step7">
+                    <div class="step-header">
+                        <span class="step-number">פאזה 5</span>
+                        <h2 class="step-title">פרסום לאינטרנט</h2>
+                        <p class="step-desc">מעלים ל-GitHub ומחברים ל-Vercel — האתר עולה לאוויר ומתעדכן אוטומטית</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב א׳ — יצירת Repository ב-GitHub</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">1</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>בקשו מקלוד קוד:</p>
+                                    <div class="callout tip">
+                                        <em>"תעלה את הפרויקט ל-GitHub repo פרטי בשם [שם הפרויקט]"</em>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-card claude">
+                                <div class="step-num-badge">2</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">קלוד</div>
+                                    <p>יוצר את ה-repository ב-GitHub, מאתחל git ועושה commit לכל הקבצים (חוץ מ-.env.local), מחבר ומעלה (git push)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב ב׳ — פרסום ב-Vercel</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">3</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <ul class="step-list">
+                                        <li>גשו ל-<a href="https://vercel.com/" target="_blank" class="ci">vercel.com</a></li>
+                                        <li>לחצו <strong>Sign In</strong> ובחרו <a href="https://github.com/" target="_blank" class="ci">GitHub</a></li>
+                                        <li>לחצו <strong>Add New</strong> ובחרו <strong>Project</strong></li>
+                                        <li>מצאו את ה-repo שקלוד יצר ולחצו <strong>Import</strong></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">4</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — משתני סביבה</div>
+                                    <p>לפני Deploy — גללו למטה ל-<strong>Environment Variables</strong>.</p>
+                                    <div class="callout tip">
+                                        <strong>💡 קיצור דרך:</strong> לחצו <strong>Import</strong> ובחרו את קובץ <span class="ci">.env.local</span> — כל המשתנים יועלו אוטומטית
+                                    </div>
+                                    <p>לחלופין — הוסיפו ידנית:</p>
+                                    <div class="code-block"><span class="ck">NEXT_PUBLIC_SUPABASE_URL</span>      <span class="cc">// מחלונית Connect: Project URL</span>
+<span class="ck">NEXT_PUBLIC_SUPABASE_ANON_KEY</span>  <span class="cc">// מחלונית Connect: anon public key</span>
+<span class="ck">SUPABASE_SERVICE_ROLE_KEY</span>     <span class="cc">// מחלונית Connect: service_role key</span>
+<span class="ck">CHATBOT_PERSONA</span>               <span class="cc">← תיאור אישיות הצ׳אטבוט</span></div>
+                                    <div class="callout amber">
+                                        <strong>GROQ_API_KEY לא נדרש ב-Vercel</strong> — הוא נמצא ב-Vault Supabase ונשלף אוטומטית בזמן ריצה.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>לחצו <strong>Deploy</strong> — המתינו כ-2 דקות</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="section-label">שלב ג׳ — חיבור Supabase לדומיין</div>
+                        <div class="steps-list">
+                            <div class="step-card user">
+                                <div class="step-num-badge">6</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>פתחו את Supabase, בחרו בתפריט השמאלי <strong>Authentication</strong> ואז <strong>URL Configuration</strong></p>
+                                    <ul class="step-list">
+                                        <li>שדה <strong>Site URL</strong>: הדביקו את כתובת ה-Vercel שלכם</li>
+                                        <li>שדה <strong>Redirect URLs</strong>: הדביקו שוב את אותה כתובת</li>
+                                        <li>לחצו <strong>Save</strong></li>
+                                    </ul>
+                                    <div class="callout tip">
+                                        <strong>🚀 האתר חי!</strong> בכל פעם שקלוד עושה שינוי ו-push ל-GitHub — Vercel מפרסם אוטומטית תוך כ-2 דקות.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ══════════════════════════════════════
+                     שלב סיכום — Checklist
+                ══════════════════════════════════════ -->
+                <div class="step" id="step8">
+                    <div class="step-header">
+                        <span class="step-number">סיכום</span>
+                        <h2 class="step-title">צ׳קליסט — הכל מוכן?</h2>
+                        <p class="step-desc">סמנו כל פריט כשסיימתם — וודאו שהכל עובד</p>
+                    </div>
+
+                    <div class="reveal">
+                        <div class="checklist-progress" id="checklistProgress">0 / 16 הושלמו</div>
+                        <div class="checklist" id="checklistEl"></div>
+                    </div>
+
+                    <div class="reveal" style="margin-top:2.5rem;">
+                        <div class="skills-section-title">מה הלאה? <span>Skills של Claude Code</span></div>
+                        <p style="font-size:0.94rem;color:#555;margin-bottom:0.5rem;">הקלפים הבאים מסבירים למה כדאי להשתמש ב-Skills — העבירו עכבר להפוך:</p>
+                        <div class="flip-grid">
+                            <div class="flip-card">
+                                <div class="flip-card-inner">
+                                    <div class="flip-front">
+                                        <div class="flip-icon">⏱️</div>
+                                        <h4>חיסכון בזמן</h4>
+                                        <p>לא צריך לחזור על עצמכם</p>
+                                        <span class="flip-hint">העבירו את העכבר ←</span>
+                                    </div>
+                                    <div class="flip-back">
+                                        Claude זוכר את תהליך העבודה שלכם — ההעדפות, הסטנדרטים, הכללים. אתם חוסכים דקות של הסברים בכל שיחה.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flip-card">
+                                <div class="flip-card-inner">
+                                    <div class="flip-front">
+                                        <div class="flip-icon">🎯</div>
+                                        <h4>עקביות</h4>
+                                        <p>תמיד אותו סגנון</p>
+                                        <span class="flip-hint">העבירו את העכבר ←</span>
+                                    </div>
+                                    <div class="flip-back">
+                                        כל הפלטים יוצאים באותו סגנון — בכל שיחה, בכל פרויקט. בלי הפתעות ובלי חוסר עקביות.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flip-card">
+                                <div class="flip-card-inner">
+                                    <div class="flip-front">
+                                        <div class="flip-icon">⭐</div>
+                                        <h4>מקצועיות</h4>
+                                        <p>ידע של מומחים</p>
+                                        <span class="flip-hint">העבירו את העכבר ←</span>
+                                    </div>
+                                    <div class="flip-back">
+                                        Skills נכתבו על ידי מומחים בתחומם — מעצבים, מפתחים, כותבי תוכן. אתם נהנים מהניסיון שלהם בלי לשלם על ייעוץ.
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flip-card">
+                                <div class="flip-card-inner">
+                                    <div class="flip-front">
+                                        <div class="flip-icon">♻️</div>
+                                        <h4>שימוש חוזר</h4>
+                                        <p>התקינו פעם אחת</p>
+                                        <span class="flip-hint">העבירו את העכבר ←</span>
+                                    </div>
+                                    <div class="flip-back">
+                                        התקינו פעם אחת — והסקיל זמין לנצח בכל פרויקט ובכל שיחה. אין צורך לעשות שום דבר נוסף.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="reveal" style="margin-top:2rem;">
+                        <div class="skills-section-title">סקילים מומלצים לעיצוב ו-UI/UX</div>
+                        <div class="skills-grid">
+                            <div class="skill-card">
+                                <div class="skill-card-inner">
+                                    <div class="skill-front">
+                                        <span class="skill-tag recommended">⭐ מומלץ ביותר</span>
+                                        <h4>UI/UX Pro Max</h4>
+                                        <p>161 פלטות צבעים, 57 זוגות פונטים, 99 גיידליינים — לכל 10 טכנולוגיות</p>
+                                    </div>
+                                    <div class="skill-back">
+                                        <h4>UI/UX Pro Max</h4>
+                                        <p><strong>מתי:</strong> בכל פרויקט, לפני שמתחילים לעצב.</p>
+                                        <a class="skill-link" href="https://github.com/nextlevelbuilder/ui-ux-pro-max-skill" target="_blank">GitHub ↗</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-card-inner">
+                                    <div class="skill-front">
+                                        <span class="skill-tag recommended">⭐ מומלץ ביותר</span>
+                                        <h4>Frontend Design</h4>
+                                        <p>ממשקים מרהיבים — נגד עיצוב גנרי. מכריח בחירות עיצוביות מכוונות.</p>
+                                    </div>
+                                    <div class="skill-back">
+                                        <h4>Frontend Design</h4>
+                                        <p><strong>מתי:</strong> בכל דף נחיתה, אתר שיווקי, פורטפוליו.</p>
+                                        <a class="skill-link" href="https://skills.sh" target="_blank">skills.sh ↗</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-card-inner">
+                                    <div class="skill-front">
+                                        <span class="skill-tag components">קומפוננטים</span>
+                                        <h4>shadcn/ui</h4>
+                                        <p>ידע מעמיק על ספריית הקומפוננטים — buttons, modals, forms, tables</p>
+                                    </div>
+                                    <div class="skill-back">
+                                        <h4>shadcn/ui</h4>
+                                        <p><strong>מתי:</strong> כל פרויקט React שמשתמש ב-shadcn.</p>
+                                        <a class="skill-link" href="https://skills.sh" target="_blank">skills.sh ↗</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-card-inner">
+                                    <div class="skill-front">
+                                        <span class="skill-tag check">בדיקה</span>
+                                        <h4>Web Design Guidelines</h4>
+                                        <p>בודק קוד מול תקני נגישות ו-UX של Vercel</p>
+                                    </div>
+                                    <div class="skill-back">
+                                        <h4>Web Design Guidelines</h4>
+                                        <p><strong>מתי:</strong> בדיקה סופית לפני העלאה לאוויר.</p>
+                                        <a class="skill-link" href="https://skills.sh" target="_blank">skills.sh ↗</a>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="skill-card">
+                                <div class="skill-card-inner">
+                                    <div class="skill-front">
+                                        <span class="skill-tag video">וידאו</span>
+                                        <h4>Remotion Best Practices</h4>
+                                        <p>38 קבצי חוקים לעבודה עם Remotion — אנימציות, אודיו, כתוביות</p>
+                                    </div>
+                                    <div class="skill-back">
+                                        <h4>Remotion Best Practices</h4>
+                                        <p><strong>מתי:</strong> יצירת וידאו מתוך React.</p>
+                                        <a class="skill-link" href="https://github.com/remotion-dev/skills" target="_blank">GitHub ↗</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="callout tip" style="margin-top:1.5rem;">
+                            <p>כל הסקילים הרשמיים ושל הקהילה נמצאים ב-<a href="https://skills.sh" target="_blank" style="color:var(--teal);font-weight:700;">skills.sh</a> — חפשו, גלו, והתקינו בקליק.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- step-container -->
+        </main>
+    </div><!-- app-body -->
+</div><!-- app -->
+
+<!-- Bottom Nav -->
+<nav class="bottom-nav" id="bottomNav">
+    <button class="nav-btn hidden" id="prevBtn" onclick="prevStep()">→ הקודם</button>
+    <div class="nav-dots" id="navDots"></div>
+    <button class="nav-btn primary" id="nextBtn" onclick="nextStep()">הבא ←</button>
+</nav>
+
+<!-- Verification Modal -->
+<div class="v-overlay" id="vOverlay">
+    <div class="v-card">
+        <div class="v-icon" id="vIcon">✅</div>
+        <div class="v-label">בדיקה — לפני שממשיכים</div>
+        <div class="v-q" id="vQuestion"></div>
+        <div class="v-actions">
+            <button class="v-btn yes"  onclick="confirmVerif()">אם כן — ממשיכים! ←</button>
+            <button class="v-btn back" onclick="closeVerif()">חזרה לשלב</button>
+        </div>
+    </div>
+</div>
+
+<!-- Completion -->
+<section class="completion" id="completion">
+    <div class="logo-bar" style="position:fixed;top:0;left:0;right:0;z-index:500;">
+        <img src="LetsAIlogo.svg" alt="Let's AI">
+    </div>
+    <div class="completion-content">
+        <img src="assets/images/iris-profile.jpg" alt="Iris" style="width:160px;height:160px;border-radius:50%;object-fit:cover;object-position:top;margin-bottom:1.2rem;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
+        <h2>האתר שלכם חי!</h2>
+        <p>בניתם אתר מלא עם מסד נתונים אמיתי, צ׳אטבוט AI ופרסום לאינטרנט — כשקלוד קוד עשה את הקוד ואתם ניהלתם את התהליך.</p>
+        <div class="completion-actions">
+            <a class="completion-btn primary" href="index.html">← חזרה למדריכים</a>
+            <button class="completion-btn secondary" onclick="restartTutorial()">חזרה להתחלה</button>
+        </div>
+    </div>
+</section>
+
+<script>
+    /* ===== state ===== */
+    let currentStep = 1;
+    const totalSteps = 8;
+    let pendingNext = null;
+
+    /* ===== verifications ===== */
+    const VERIF = {
+        1: { icon:'📁', q:'תיקיית הפרויקט מוכנה עם plan.md, כל קבצי הפאזות, design.md, תמונות ולוגו?' },
+        2: { icon:'🔑', q:'לחצתם Copy ב-Connect? הדבקתם ב-.env.local ושמרתם עם Ctrl+S?' },
+        3: { icon:'🗄️', q:'פתחו את Supabase ובחרו Table Editor בתפריט השמאלי. האם הטבלאות קיימות?' },
+        4: { icon:'🖥️', q:'האתר עולה ב-localhost:3000 ונראה כמו שרציתם? הטופס עובד?' },
+        5: { icon:'🤖', q:'הצ׳אטבוט מופיע? לחצו עליו ושאלו שאלה — הוא עונה בהתבסס על services.md?' },
+        6: { icon:'🔐', q:'הרצתם את ה-SQL ב-Vault? הוספתם service_role key ל-.env.local ושמרתם?' },
+        7: { icon:'🚀', q:'האתר חי ב-Vercel? Supabase URL Configuration מוגדר?' },
+    };
+
+    /* ===== checklist ===== */
+    const CHECKLIST = [
+        { section: 'נקודת פתיחה', items: [
+            'תיקיית פרויקט עם plan.md וכל קבצי הפאזות',
+            'design.md מוכן',
+            'תמונות ולוגו מוכנים'
+        ]},
+        { section: 'פאזה 1 — Supabase', items: [
+            'פרויקט Supabase נפתח',
+            'מפתחות הועתקו מ-Connect ל-.env.local',
+            'פרויקט Next.js + TypeScript + Tailwind נוצר',
+            'טבלאות נוצרו ב-Supabase'
+        ]},
+        { section: 'פאזה 2 — עיצוב', items: [
+            'תמונות הועברו לתיקיית public/',
+            'האתר נבנה לפי design.md',
+            'האתר עולה ב-localhost:3000',
+            'טופס הלידים שומר נתונים ב-Supabase'
+        ]},
+        { section: 'פאזה 3 — Groq', items: [
+            'חשבון Groq נפתח ו-API Key הועתק',
+            'services.md נכתב',
+            'צ׳אטבוט ציף פועל ועונה'
+        ]},
+        { section: 'פאזות 4 ו-5', items: [
+            'Groq Key נשמר ב-Vault Supabase',
+            'אתר חי ב-Vercel',
+            'Supabase Auth URL מוגדר לדומיין Vercel'
+        ]}
+    ];
+
+    /* ===== init ===== */
+    function buildChecklist() {
+        const el = document.getElementById('checklistEl');
+        let html = '';
+        CHECKLIST.forEach(group => {
+            html += `<div class="check-section">${group.section}</div>`;
+            group.items.forEach(item => {
+                html += `
+                <div class="check-item" onclick="toggleCheck(this)">
+                    <div class="check-box"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
+                    <div class="check-content">${item}</div>
+                </div>`;
+            });
+        });
+        el.innerHTML = html;
+    }
+
+    function buildDots() {
+        document.getElementById('navDots').innerHTML =
+            Array.from({length:totalSteps},(_,i)=>
+                `<button class="nav-dot${i===0?' active':''}" onclick="goToStep(${i+1})"></button>`
+            ).join('');
+    }
+
+    /* ===== hero ===== */
+    window.addEventListener('load', () => {
+        document.querySelector('.hero').classList.add('animate');
+        setTimeout(() => {
+            const c = document.querySelector('.hero-content');
+            const h = document.querySelector('.hero').offsetHeight;
+            c.style.top = (h - c.offsetHeight - window.innerHeight * 0.03) + 'px';
+        }, 2000);
+        buildChecklist();
+        buildDots();
+        updateChecklistProgress();
+    });
+
+    function startTutorial() {
+        const hero = document.getElementById('hero');
+        hero.style.opacity = '0';
+        hero.style.transition = 'opacity 0.4s ease';
+        setTimeout(() => {
+            hero.style.display = 'none';
+            document.getElementById('app').classList.add('visible');
+            document.getElementById('topNav').classList.add('visible');
+            document.getElementById('bottomNav').classList.add('visible');
+            updateStep(1);
+            window.scrollTo(0,0);
+        }, 400);
+    }
+
+    /* ===== navigation ===== */
+    function goToStep(n) {
+        if (n < 1 || n > totalSteps) return;
+        currentStep = n;
+        updateStep(n);
+    }
+
+    function nextStep() {
+        if (currentStep < totalSteps) {
+            const v = VERIF[currentStep];
+            if (v) { openVerif(v, currentStep + 1); }
+            else   { currentStep++; updateStep(currentStep); }
+        } else {
+            showCompletion();
+        }
+    }
+
+    function prevStep() {
+        if (currentStep > 1) { currentStep--; updateStep(currentStep); }
+    }
+
+    function updateStep(n) {
+        document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+        const el = document.getElementById('step' + n);
+        if (el) el.classList.add('active');
+
+        const labels = ['0','1א','1ב','2','3','4','5','✓'];
+        document.querySelectorAll('.nav-step').forEach((btn, i) => {
+            btn.classList.remove('active','completed');
+            const num = btn.querySelector('.nav-step-num');
+            if (i < n - 1) { btn.classList.add('completed'); num.textContent = '✓'; }
+            else            { num.textContent = labels[i] || (i+1); }
+            if (i === n - 1) btn.classList.add('active');
+        });
+
+        document.getElementById('navProgressFill').style.width = (n / totalSteps * 100) + '%';
+        document.querySelectorAll('.nav-dot').forEach((d,i) => d.classList.toggle('active', i === n-1));
+        document.getElementById('prevBtn').classList.toggle('hidden', n === 1);
+        document.getElementById('nextBtn').textContent = n === totalSteps ? 'סיום ←' : 'הבא ←';
+
+        window.scrollTo({top:0, behavior:'smooth'});
+        setTimeout(triggerReveal, 100);
+    }
+
+    function triggerReveal() {
+        const active = document.querySelector('.step.active');
+        if (!active) return;
+        active.querySelectorAll('.reveal').forEach((el,i) => {
+            setTimeout(() => el.classList.add('visible'), i * 130);
+        });
+    }
+
+    /* ===== verification ===== */
+    function openVerif(config, next) {
+        pendingNext = next;
+        document.getElementById('vIcon').textContent     = config.icon;
+        document.getElementById('vQuestion').textContent = config.q;
+        document.getElementById('vOverlay').classList.add('open');
+    }
+    function closeVerif()   { document.getElementById('vOverlay').classList.remove('open'); }
+    function confirmVerif() { closeVerif(); currentStep = pendingNext; updateStep(currentStep); }
+
+    /* ===== checklist ===== */
+    function toggleCheck(item) {
+        item.classList.toggle('checked');
+        updateChecklistProgress();
+    }
+
+    function updateChecklistProgress() {
+        const done  = document.querySelectorAll('.check-item.checked').length;
+        const total = document.querySelectorAll('.check-item').length;
+        const el = document.getElementById('checklistProgress');
+        if (el) el.textContent = `${done} / ${total} הושלמו`;
+    }
+
+    /* ===== completion ===== */
+    function showCompletion() {
+        document.getElementById('app').style.display = 'none';
+        document.getElementById('bottomNav').style.display = 'none';
+        document.getElementById('completion').classList.add('visible');
+    }
+
+    function restartTutorial() {
+        document.getElementById('completion').classList.remove('visible');
+        document.getElementById('app').style.display = 'flex';
+        const nav = document.getElementById('bottomNav');
+        nav.style.display = '';
+        nav.classList.add('visible');
+        currentStep = 1;
+        updateStep(1);
+        window.scrollTo(0, 0);
+        document.querySelectorAll('.check-item').forEach(i => i.classList.remove('checked'));
+        updateChecklistProgress();
+    }
+</script>
+</body>
+</html>

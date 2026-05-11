@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Let's AI — מדריכים</title>
+    <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;700;900&family=Heebo:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Heebo',sans-serif;
+            background:#f5f0ed;
+            min-height:100vh;
+            display:flex; flex-direction:column;
+            align-items:center; justify-content:center;
+            direction:rtl;
+        }
+
+        .logo-bar {
+            position:fixed; top:0; left:0; right:0;
+            background:#c6eee8;
+            padding:0.5rem 2rem;
+            display:flex; align-items:center;
+            z-index:100;
+        }
+        .logo-bar img { height:64px; width:auto; }
+
+        .page {
+            display:flex; flex-direction:column;
+            align-items:center; gap:1.5rem;
+            padding:8rem 1.5rem 3rem;
+            width:100%;
+        }
+
+        h1 {
+            font-family:'Frank Ruhl Libre',serif;
+            font-size:clamp(1.8rem,4vw,2.6rem);
+            font-weight:900; color:#1a1a1a;
+            text-align:center;
+        }
+        .subtitle {
+            font-size:1rem; color:#666;
+            text-align:center; margin-top:-0.5rem;
+        }
+
+        .cards {
+            display:flex; gap:1.5rem;
+            flex-wrap:wrap; justify-content:center;
+            max-width:820px; width:100%;
+        }
+
+        .card {
+            background:rgba(255,255,255,0.75);
+            backdrop-filter:blur(12px);
+            border:1px solid rgba(255,255,255,0.5);
+            border-radius:20px;
+            padding:2.2rem 2rem;
+            width:340px;
+            box-shadow:0 6px 32px rgba(0,0,0,0.08);
+            display:flex; flex-direction:column; gap:1rem;
+            transition:transform 0.2s ease, box-shadow 0.2s ease;
+            cursor:pointer;
+            text-decoration:none; color:inherit;
+        }
+        .card:hover {
+            transform:translateY(-6px);
+            box-shadow:0 14px 44px rgba(0,0,0,0.13);
+        }
+
+        .card-badge {
+            display:inline-block;
+            padding:3px 14px; border-radius:50px;
+            font-size:0.72rem; font-weight:700;
+            letter-spacing:0.05em; text-transform:uppercase;
+            width:fit-content;
+        }
+        .card-badge.skills   { background:rgba(42,157,143,0.15); color:#2a9d8f; }
+        .card-badge.supabase { background:rgba(224,123,114,0.15); color:#c05448; }
+
+        .card h2 {
+            font-family:'Frank Ruhl Libre',serif;
+            font-size:1.4rem; font-weight:800; color:#1a1a1a;
+            line-height:1.3;
+        }
+        .card p {
+            font-size:0.88rem; color:#555; line-height:1.6;
+        }
+
+        .card-arrow {
+            font-size:1.3rem; margin-top:auto;
+            color:#aaa; transition:color 0.2s;
+        }
+        .card:hover .card-arrow { color:#2a9d8f; }
+        .card.supabase-card:hover .card-arrow { color:#c05448; }
+
+        .card-icon { font-size:2.4rem; }
+    </style>
+</head>
+<body>
+
+<div class="logo-bar">
+    <img src="LetsAIlogo.svg" alt="Let's AI">
+</div>
+
+<div class="page">
+    <h1>המדריכים של Let's AI</h1>
+    <p class="subtitle">בחרי את המדריך שתרצי לפתוח</p>
+
+    <div class="cards">
+
+        <a class="card" href="skills.html">
+            <div class="card-icon">🛠️</div>
+            <span class="card-badge skills">Claude Code</span>
+            <h2>Skills — שימוש ב-Claude Code</h2>
+            <p>מדריך שלב אחר שלב לשימוש ב-Skills של Claude Code — מהתקנה ועד לעבודה שוטפת.</p>
+            <div class="card-arrow">← פתחו</div>
+        </a>
+
+        <a class="card supabase-card" href="supabase/">
+            <div class="card-icon">🗄️</div>
+            <span class="card-badge supabase">Supabase + Next.js</span>
+            <h2>בניית אתר מא׳ עד ת׳</h2>
+            <p>מדריך מפורט לבניית אתר עם בסיס נתונים אמיתי — מהפרויקט הריק עד לאתר חי.</p>
+            <div class="card-arrow">← פתחו</div>
+        </a>
+
+        <a class="card" href="website-guide.html" style="border-top: 3px solid #C8006B;">
+            <div class="card-icon">🚀</div>
+            <span class="card-badge" style="background:rgba(200,0,107,0.12);color:#C8006B;">5 פאזות · Claude Code</span>
+            <h2>מדריך בניית אתר — מ-א׳ עד ת׳</h2>
+            <p>Supabase · Groq · Vercel · GitHub — המדריך המעשי המלא לבניית אתר עם צ׳אטבוט AI ומסד נתונים.</p>
+            <div class="card-arrow" style="color:#C8006B;">← פתחו</div>
+        </a>
+
+    </div>
+</div>
+
+</body>
+</html>
