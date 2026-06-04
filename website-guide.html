@@ -6,6 +6,12 @@
     <title>בניית אתר עם Claude Code — מ-א׳ עד ת׳</title>
     <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@400;500;700;900&family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        @font-face {
+            font-family: 'OhYaelLeibushor';
+            src: url('assets/OHYaelLeibushor1.0-Regular.otf') format('opentype');
+            font-weight: normal;
+            font-style: normal;
+        }
         /* ===== משתנים גלובליים ===== */
         :root {
             --teal:         #00b09b;
@@ -34,15 +40,14 @@
         /* ===== Logo Bar ===== */
         .logo-bar {
             width:100%; background:var(--teal-light); padding:8px 20px;
-            display:flex; align-items:center; justify-content:flex-start;
+            display:flex; align-items:center; justify-content:space-between;
             direction:ltr; z-index:500;
             border-bottom:1px solid rgba(0,0,0,0.06);
         }
         .logo-bar img { height:80px; width:auto; }
         .hero .logo-bar {
             position:absolute; top:0; left:0; right:0; z-index:10;
-            background:rgba(255,255,255,0.85);
-            backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+            background:var(--teal-light);
         }
         .app-logo-bar { position:fixed; top:0; left:0; right:0; z-index:500; background:var(--teal-light); }
 
@@ -384,6 +389,12 @@
         .v-btn.back { background:none; border:2px solid rgba(0,0,0,0.14); color:#777; font-size:0.85rem; }
         .v-btn:active { transform:scale(0.97); }
 
+        /* ===== Confetti Canvas ===== */
+        #confetti-canvas {
+            position:fixed; top:0; left:0; width:100%; height:100%;
+            pointer-events:none; z-index:9999;
+        }
+
         /* ===== Completion ===== */
         .completion {
             display:none; min-height:100vh;
@@ -396,6 +407,14 @@
         .completion-emoji { font-size:4rem; margin-bottom:1.25rem; display:block; }
         .completion h2 { font-size:clamp(2rem,5vw,3rem); font-weight:900; margin-bottom:0.75rem; }
         .completion p  { font-size:1.05rem; color:#555; margin-bottom:2rem; }
+        .handwritten {
+            font-family:'OhYaelLeibushor', cursive;
+            font-size:clamp(4.8rem,12vw,7.6rem);
+            color:var(--coral);
+            line-height:1.2;
+            margin-bottom:1rem;
+            display:block;
+        }
         .completion-actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
         .completion-btn {
             padding:12px 30px; border-radius:50px;
@@ -555,6 +574,7 @@
 <section class="hero" id="hero">
     <div class="logo-bar">
         <img src="LetsAIlogo.svg" alt="Let's AI">
+        <img src="assets/images/iris-profile.jpg" alt="Iris" style="height:80px;width:80px;border-radius:50%;object-fit:cover;object-position:top;">
     </div>
     <video class="hero-video" autoplay muted loop playsinline preload="auto">
         <source src="assets/videos/kling_intro.mp4" type="video/mp4">
@@ -624,6 +644,13 @@
                      שלב 0 — נקודת פתיחה
                 ══════════════════════════════════════ -->
                 <div class="step active" id="step1">
+                    <div style="background:rgba(0,176,155,0.07);border-right:4px solid var(--teal);border-radius:12px;padding:1.2rem 1.4rem;margin-bottom:1.5rem;">
+                        <p style="font-size:1rem;color:#333;line-height:1.8;margin:0;">
+                            במדריך הזה תבנו אתר אמיתי עם מסד נתונים, צ׳אטבוט AI ופרסום לאינטרנט — <strong>בלי לכתוב קוד בעצמכם.</strong><br>
+                            Claude Code כותב את הקוד, ואתם מנהלים את התהליך: מחליטים מה לבנות, מאשרים, בודקים ומכוונים.<br>
+                            עקבו אחרי 5 הפאזות — כל שלב מסתיים עם תוצאה ברורה שאפשר לראות ולגעת בה.
+                        </p>
+                    </div>
                     <div class="step-header">
                         <span class="step-number">שלב 0</span>
                         <h2 class="step-title">נקודת הפתיחה — מה מכינים מראש</h2>
@@ -786,11 +813,42 @@
                                 <div class="step-num-badge">3</div>
                                 <div class="step-card-body">
                                     <div class="step-who">אתם</div>
-                                    <p>לחצו <strong>New project</strong>, תנו שם והגדירו סיסמה. לחצו <strong>Create new project</strong></p>
+                                    <p>לאחר ההרשמה — בחרו ב<strong>Organization</strong> שנוצר אוטומטית עבורכם</p>
+                                    <div style="position:relative;margin-top:0.8rem;">
+                                        <img src="assets/images/supabaseorg.png" alt="בחירת Organization ב-Supabase" style="width:100%;border-radius:12px;display:block;">
+                                        <div class="arrow-float" style="position:absolute;top:42%;left:47%;"><img src="assets/images/arrow.png" alt="arrow" style="transform:rotate(315deg);width:55px;height:auto;display:block;"></div>
+                                    </div>
                                 </div>
                             </div>
                             <div class="step-card user">
                                 <div class="step-num-badge">4</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם</div>
+                                    <p>לחצו <strong>New project</strong> — תיפתח טופס יצירת פרויקט</p>
+                                    <div style="position:relative;margin-top:0.8rem;">
+                                        <img src="assets/images/supabasenewpro.png" alt="פתיחת פרויקט חדש ב-Supabase" style="width:100%;border-radius:12px;display:block;">
+                                        <div class="arrow-float" style="position:absolute;top:36%;right:3%;"><img src="assets/images/arrow.png" alt="arrow" style="transform:rotate(90deg);width:55px;height:auto;display:block;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">5</div>
+                                <div class="step-card-body">
+                                    <div class="step-who">אתם — מלאו את הטופס</div>
+                                    <ul style="margin:0.5rem 0 0;padding-right:1.2rem;line-height:2;">
+                                        <li><strong>Project name</strong> — תנו שם לפרויקט (לדוגמה: my-website)</li>
+                                        <li><strong>Database password</strong> — צרו סיסמה חזקה ו<span style="color:var(--coral);font-weight:700;">שמרו אותה במקום בטוח</span> — תצטרכו אותה בהמשך</li>
+                                        <li><strong>Region</strong> — בחרו את האזור הקרוב אליכם</li>
+                                    </ul>
+                                    <img src="assets/images/projectname.png" alt="מילוי פרטי הפרויקט" style="width:100%;border-radius:12px;margin-top:0.8rem;display:block;">
+                                    <p style="margin-top:0.7rem;">לחצו <strong>Create new project</strong> לסיום</p>
+                                    <div style="background:rgba(219,119,87,0.1);border:1px solid rgba(219,119,87,0.3);border-radius:8px;padding:0.6rem 0.9rem;margin-top:0.7rem;font-size:0.88rem;color:#8a3a1f;">
+                                        ⚠️ <strong>חשוב:</strong> סיסמת ה-Database לא ניתנת לשחזור — שמרו אותה עכשיו!
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="step-card user">
+                                <div class="step-num-badge">6</div>
                                 <div class="step-card-body">
                                     <div class="step-who">אתם</div>
                                     <p>המתינו כ-2 דקות עד שהפרויקט מוכן — הדף יתרענן אוטומטית</p>
@@ -803,7 +861,7 @@
                         <div class="section-label">העתקת מפתחות — כפתור Connect</div>
                         <div class="steps-list">
                             <div class="step-card user">
-                                <div class="step-num-badge">5</div>
+                                <div class="step-num-badge">7</div>
                                 <div class="step-card-body">
                                     <div class="step-who">אתם — כפתור ירוק Connect</div>
                                     <p>בדשבורד של הפרויקט — לחצו על הכפתור הירוק <strong>Connect</strong> הנמצא ליד שם הפרויקט</p>
@@ -815,14 +873,14 @@
                                 </div>
                             </div>
                             <div class="step-card user">
-                                <div class="step-num-badge">6</div>
+                                <div class="step-num-badge">8</div>
                                 <div class="step-card-body">
                                     <div class="step-who">אתם</div>
                                     <p>לחצו <strong>Copy</strong> בחלונית — <strong>כל המפתחות מועתקים בבת אחת</strong></p>
                                 </div>
                             </div>
                             <div class="step-card user">
-                                <div class="step-num-badge">7</div>
+                                <div class="step-num-badge">9</div>
                                 <div class="step-card-body">
                                     <div class="step-who">אתם — הדבקה ב-.env.local</div>
                                     <p>פתחו את קובץ <span class="ci">.env.local</span> ב-Notepad / VS Code / Cursor, הדביקו (Ctrl+V) ושמרו (Ctrl+S)</p>
@@ -1487,6 +1545,8 @@
     </div>
 </div>
 
+<canvas id="confetti-canvas"></canvas>
+
 <!-- Completion -->
 <section class="completion" id="completion">
     <div class="logo-bar" style="position:fixed;top:0;left:0;right:0;z-index:500;">
@@ -1494,16 +1554,22 @@
     </div>
     <div class="completion-content">
         <img src="assets/images/iris-profile.jpg" alt="Iris" style="width:160px;height:160px;border-radius:50%;object-fit:cover;object-position:top;margin-bottom:1.2rem;box-shadow:0 8px 32px rgba(0,0,0,0.15);">
-        <h2>האתר שלכם חי!</h2>
-        <p>בניתם אתר מלא עם מסד נתונים אמיתי, צ׳אטבוט AI ופרסום לאינטרנט — כשקלוד קוד עשה את הקוד ואתם ניהלתם את התהליך.</p>
+        <span class="handwritten">כל הכבוד!</span>
+        <h2>האתר שלכם באוויר</h2>
+        <p>בניתם אתר מלא עם מסד נתונים אמיתי, צ׳אטבוט AI ופרסום לאינטרנט — כשקלוד קוד כתב את הקוד ואתם ניהלתם את התהליך.</p>
         <div class="completion-actions">
-            <a class="completion-btn primary" href="index.html">← חזרה למדריכים</a>
             <button class="completion-btn secondary" onclick="restartTutorial()">חזרה להתחלה</button>
         </div>
     </div>
 </section>
 
 <script>
+    /* הפעלת הסרטון — fallback לדפדפנים שחוסמים autoplay */
+    document.addEventListener('DOMContentLoaded', () => {
+        const v = document.querySelector('.hero-video');
+        if (v) { v.muted = true; v.play().catch(() => {}); }
+    });
+
     /* ===== state ===== */
     let currentStep = 1;
     const totalSteps = 8;
@@ -1512,12 +1578,6 @@
     /* ===== verifications ===== */
     const VERIF = {
         1: { icon:'📁', q:'תיקיית הפרויקט מוכנה עם plan.md, כל קבצי הפאזות, design.md, תמונות ולוגו?' },
-        2: { icon:'🔑', q:'לחצתם Copy ב-Connect? הדבקתם ב-.env.local ושמרתם עם Ctrl+S?' },
-        3: { icon:'🗄️', q:'פתחו את Supabase ובחרו Table Editor בתפריט השמאלי. האם הטבלאות קיימות?' },
-        4: { icon:'🖥️', q:'האתר עולה ב-localhost:3000 ונראה כמו שרציתם? הטופס עובד?' },
-        5: { icon:'🤖', q:'הצ׳אטבוט מופיע? לחצו עליו ושאלו שאלה — הוא עונה בהתבסס על services.md?' },
-        6: { icon:'🔐', q:'הרצתם את ה-SQL ב-Vault? הוספתם service_role key ל-.env.local ושמרתם?' },
-        7: { icon:'🚀', q:'האתר חי ב-Vercel? Supabase URL Configuration מוגדר?' },
     };
 
     /* ===== checklist ===== */
@@ -1677,14 +1737,70 @@
         if (el) el.textContent = `${done} / ${total} הושלמו`;
     }
 
+    /* ===== confetti ===== */
+    let confettiAnim = null;
+    function startConfetti() {
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        const colors = ['#db7757','#00b09b','#f5b400','#9deee5','#ff6b9d','#6c63ff','#ffd166','#06d6a0'];
+        const pieces = Array.from({length:160}, () => ({
+            x: Math.random() * window.innerWidth,
+            y: Math.random() * -window.innerHeight,
+            r: Math.random() * 7 + 4,
+            d: Math.random() * 3 + 1,
+            color: colors[Math.floor(Math.random() * colors.length)],
+            tilt: Math.random() * 10 - 5,
+            tiltSpeed: Math.random() * 0.1 + 0.05,
+            angle: 0,
+            shape: Math.random() > 0.5 ? 'rect' : 'circle'
+        }));
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        resize();
+        window.addEventListener('resize', resize);
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach(p => {
+                ctx.save();
+                ctx.translate(p.x, p.y);
+                ctx.rotate(p.angle * Math.PI / 180);
+                ctx.fillStyle = p.color;
+                if (p.shape === 'rect') {
+                    ctx.fillRect(-p.r / 2, -p.r / 2, p.r, p.r * 1.6);
+                } else {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, p.r / 2, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+                ctx.restore();
+                p.y += p.d;
+                p.angle += p.tiltSpeed * 3;
+                if (p.y > canvas.height + 10) {
+                    p.y = -10;
+                    p.x = Math.random() * canvas.width;
+                }
+            });
+            confettiAnim = requestAnimationFrame(draw);
+        }
+        draw();
+    }
+    function stopConfetti() {
+        if (confettiAnim) { cancelAnimationFrame(confettiAnim); confettiAnim = null; }
+        const canvas = document.getElementById('confetti-canvas');
+        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    }
+
     /* ===== completion ===== */
     function showCompletion() {
         document.getElementById('app').style.display = 'none';
         document.getElementById('bottomNav').style.display = 'none';
         document.getElementById('completion').classList.add('visible');
+        startConfetti();
     }
 
     function restartTutorial() {
+        stopConfetti();
         document.getElementById('completion').classList.remove('visible');
         document.getElementById('app').style.display = 'flex';
         const nav = document.getElementById('bottomNav');
