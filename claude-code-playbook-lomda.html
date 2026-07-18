@@ -27,7 +27,7 @@
   --user-border:   var(--secondary);
   --claude-border: var(--black);
   --info-border:   var(--gray);
-  --header-h:  150px;
+  --header-h:  96px;
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { direction:rtl; scroll-behavior:smooth; }
@@ -43,14 +43,14 @@ h1,h2,h3,h4 { font-family:'Rubik',sans-serif; font-weight:800; line-height:1.3; 
 
 /* ===== Logo Bar ===== */
 .logo-bar {
-  width:100%; height:var(--header-h); background:var(--secondary); padding:14px 20px;
+  width:100%; height:var(--header-h); background:var(--secondary); padding:2px 20px;
   display:flex; align-items:center; justify-content:center;
   direction:ltr; z-index:500;
   border-bottom:1px solid rgba(0,0,0,0.06);
   position:absolute; top:0; left:0; right:0;
 }
 .app-logo-bar { position:fixed; top:0; left:0; right:0; z-index:500; background:var(--secondary); }
-.logo-bar-center { width:calc(100% - 56px); max-width:640px; height:auto; display:block; }
+.logo-bar-center { width:calc(100% - 56px); max-width:410px; height:auto; display:block; }
 
 /* ===== Hero ===== */
 .hero {
@@ -409,10 +409,13 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
   align-items:center; justify-content:flex-start;
   text-align:center; padding:2rem;
   padding-top:calc(var(--header-h) + 2rem);
-  background:#000;
+  background:#f2efe8;
 }
 .completion.visible { display:flex; flex-direction:column; }
-.completion-video { position:absolute; top:var(--header-h); left:0; height:calc(100% - var(--header-h)); width:auto; max-width:none; object-fit:contain; object-position:left center; z-index:0; }
+.completion-video { position:absolute; top:var(--header-h); left:50%; transform:translateX(-50%); height:calc(100% - var(--header-h)); width:auto; max-width:none; object-fit:contain; object-position:center center; z-index:0; }
+.completion-mascot { position:absolute; top:50%; transform:translateY(-50%); width:min(26vw, 340px); height:auto; z-index:1; }
+.completion-mascot.left  { left:2rem; }
+.completion-mascot.right { right:2rem; }
 .completion-content { position:relative; z-index:2; max-width:520px; }
 .completion-goodluck { font-size:clamp(2.1rem,5.5vw,3.2rem); font-weight:900; color:#fff; margin-top:1.25rem; }
 .completion-goodluck .wave-letter {
@@ -448,8 +451,8 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
 /* ===== Responsive ===== */
 @media (max-width:768px) {
   .main-content { padding:1.5rem 1rem 6rem; }
-  :root { --header-h:100px; }
-  .logo-bar-center { max-width:340px; }
+  :root { --header-h:52px; }
+  .logo-bar-center { max-width:218px; }
   .bottom-nav { padding:0.8rem 1.1rem; }
   .menu-toggle { display:flex; }
   .sidebar {
@@ -1755,6 +1758,8 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
   <video class="completion-video" muted playsinline preload="auto">
     <source src="assets/videos/finalvideo.mp4" type="video/mp4">
   </video>
+  <img class="completion-mascot left" src="assets/images/Claudecode.png" alt="">
+  <img class="completion-mascot right" src="assets/images/Claudecode.png" alt="">
   <div class="completion-content">
     <div class="completion-actions">
       <button class="completion-btn secondary" onclick="restartTutorial()"><i data-lucide="rotate-ccw" class="icon-sm"></i> חזרה להתחלה</button>
@@ -1906,7 +1911,9 @@ function restartTutorial() {
   document.getElementById('completion').classList.remove('visible');
   document.querySelector('.completion-video').pause();
   document.getElementById('app').style.display = 'flex';
-  document.getElementById('bottomNav').classList.add('visible');
+  const bottomNav = document.getElementById('bottomNav');
+  bottomNav.style.display = '';
+  bottomNav.classList.add('visible');
   currentStep = 1;
   updateStep(1);
   document.querySelectorAll('.check-item').forEach(i => i.classList.remove('checked'));
