@@ -27,8 +27,7 @@
   --user-border:   var(--secondary);
   --claude-border: var(--black);
   --info-border:   var(--gray);
-  --logo-h:    56px;
-  --header-h:  calc(var(--logo-h) + 17px);
+  --header-h:  150px;
 }
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 html { direction:rtl; scroll-behavior:smooth; }
@@ -44,14 +43,14 @@ h1,h2,h3,h4 { font-family:'Rubik',sans-serif; font-weight:800; line-height:1.3; 
 
 /* ===== Logo Bar ===== */
 .logo-bar {
-  width:100%; background:var(--secondary); padding:8px 20px;
-  display:flex; align-items:center; justify-content:flex-start; gap:18px;
+  width:100%; height:var(--header-h); background:var(--secondary); padding:14px 20px;
+  display:flex; align-items:center; justify-content:center;
   direction:ltr; z-index:500;
   border-bottom:1px solid rgba(0,0,0,0.06);
   position:absolute; top:0; left:0; right:0;
 }
-.logo-bar img { height:var(--logo-h); width:auto; display:block; }
 .app-logo-bar { position:fixed; top:0; left:0; right:0; z-index:500; background:var(--secondary); }
+.logo-bar-center { width:calc(100% - 56px); max-width:640px; height:auto; display:block; }
 
 /* ===== Hero ===== */
 .hero {
@@ -118,7 +117,8 @@ h1,h2,h3,h4 { font-family:'Rubik',sans-serif; font-weight:800; line-height:1.3; 
 /* ===== Sidebar (step menu) ===== */
 .menu-toggle {
   display:none; align-items:center; justify-content:center;
-  width:38px; height:38px; border-radius:50%; margin-left:auto;
+  width:38px; height:38px; border-radius:50%;
+  position:absolute; top:50%; right:16px; transform:translateY(-50%);
   border:none; background:rgba(0,0,0,0.08); color:var(--black); cursor:pointer;
   transition:background 0.2s;
 }
@@ -298,6 +298,8 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
 .settings-item.open .settings-item-panel { max-height:1200px; }
 .settings-item-panel-inner { padding:0 1.1rem 1.1rem; border-top:1px solid rgba(0,0,0,0.06); }
 .settings-tab-sub { font-size:0.85rem; color:var(--gray); margin:0.85rem 0 0.9rem; }
+.settings-path-note { display:flex; align-items:center; gap:6px; font-size:0.85rem; color:var(--gray); margin:0 0 0.7rem; }
+.settings-path-note .icon-sm { color:var(--amber); flex-shrink:0; }
 .settings-row { display:flex; align-items:flex-start; gap:0.65rem; padding:0.55rem 0; border-top:1px solid rgba(0,0,0,0.05); }
 .settings-row:first-of-type { border-top:none; }
 .settings-check {
@@ -402,16 +404,35 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
 
 /* ===== Completion ===== */
 .completion {
+  position:relative; overflow:hidden;
   display:none; min-height:100vh;
-  align-items:center; justify-content:center;
+  align-items:center; justify-content:flex-start;
   text-align:center; padding:2rem;
-  background:linear-gradient(135deg,#FAF8F2 0%,#F0EDE2 100%);
+  padding-top:calc(var(--header-h) + 2rem);
+  background:#000;
 }
 .completion.visible { display:flex; flex-direction:column; }
-.completion-content { max-width:520px; }
-.completion-icon { width:88px; height:88px; margin:0 auto 1.25rem; border-radius:50%; background:rgba(187,210,60,0.25); display:flex; align-items:center; justify-content:center; }
-.completion h2 { font-size:clamp(2rem,5vw,3rem); font-weight:900; margin-bottom:0.75rem; }
-.completion p  { font-size:1.05rem; color:rgba(0,0,0,0.7); margin-bottom:2rem; }
+.completion-video { position:absolute; top:var(--header-h); left:0; height:calc(100% - var(--header-h)); width:auto; max-width:none; object-fit:contain; object-position:left center; z-index:0; }
+.completion-content { position:relative; z-index:2; max-width:520px; }
+.completion-goodluck { font-size:clamp(2.1rem,5.5vw,3.2rem); font-weight:900; color:#fff; margin-top:1.25rem; }
+.completion-goodluck .wave-letter {
+  display:inline-block; opacity:0;
+  text-shadow:0 1px 0 rgba(0,0,0,0.55), 0 3px 6px rgba(0,0,0,0.5), 0 8px 20px rgba(0,0,0,0.4);
+  animation:waveIn 0.7s cubic-bezier(0.34,1.56,0.64,1) forwards;
+}
+.completion-goodluck .wave-letter:nth-child(1) { animation-delay:0.05s; }
+.completion-goodluck .wave-letter:nth-child(2) { animation-delay:0.10s; }
+.completion-goodluck .wave-letter:nth-child(3) { animation-delay:0.15s; }
+.completion-goodluck .wave-letter:nth-child(4) { animation-delay:0.20s; }
+.completion-goodluck .wave-letter:nth-child(5) { animation-delay:0.25s; }
+.completion-goodluck .wave-letter:nth-child(6) { animation-delay:0.30s; }
+.completion-goodluck .wave-letter:nth-child(7) { animation-delay:0.35s; }
+@keyframes waveIn {
+  0%   { opacity:0; transform:translateY(26px) scale(0.7); }
+  55%  { opacity:1; transform:translateY(-10px) scale(1.08); }
+  80%  { transform:translateY(4px) scale(0.98); }
+  100% { opacity:1; transform:translateY(0) scale(1); }
+}
 .completion-actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
 .completion-btn {
   display:flex; align-items:center; gap:7px;
@@ -427,7 +448,8 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
 /* ===== Responsive ===== */
 @media (max-width:768px) {
   .main-content { padding:1.5rem 1rem 6rem; }
-  :root { --logo-h:44px; }
+  :root { --header-h:100px; }
+  .logo-bar-center { max-width:340px; }
   .bottom-nav { padding:0.8rem 1.1rem; }
   .menu-toggle { display:flex; }
   .sidebar {
@@ -449,7 +471,7 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
 <!-- ===================== HERO ===================== -->
 <section class="hero" id="hero">
   <div class="logo-bar">
-    <img src="assets/images/LetsAIlogo.svg" alt="Let's AI">
+    <img class="logo-bar-center" src="assets/images/LogoBanner.svg" alt="">
   </div>
   <video class="hero-video" autoplay muted loop playsinline preload="auto">
     <source src="assets/videos/kling_intro.mp4" type="video/mp4">
@@ -470,7 +492,7 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
 <!-- ===================== APP ===================== -->
 <div class="app" id="app">
   <div class="logo-bar app-logo-bar">
-    <img src="assets/images/LetsAIlogo.svg" alt="Let's AI">
+    <img class="logo-bar-center" src="assets/images/LogoBanner.svg" alt="">
     <button class="menu-toggle" id="menuToggle" onclick="toggleSidebar()" aria-label="תפריט שלבים"><i data-lucide="menu"></i></button>
   </div>
   <div class="sidebar-backdrop" id="sidebarBackdrop" onclick="closeSidebar()"></div>
@@ -563,6 +585,7 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
           </div>
 
           <div class="reveal">
+            <p class="settings-path-note"><i data-lucide="user-round" class="icon-sm"></i> חמש הכרטיסיות הבאות נמצאות תחת הפרופיל שלכם (בפינה הימנית התחתונה) ← <span class="ci">Settings</span>.</p>
             <div class="settings-accordion">
 
               <div class="settings-item">
@@ -692,6 +715,13 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
                 </div>
               </div>
 
+            </div>
+          </div>
+
+          <div class="reveal">
+            <p class="settings-path-note"><i data-lucide="user-round" class="icon-sm"></i> לכרטיסייה האחרונה יש להמשיך צעד נוסף: הפרופיל שלכם ← <span class="ci">Settings</span> ← גוללים למטה עד <span class="ci">Desktop app – Computer use</span>.</p>
+            <div class="settings-accordion">
+
               <div class="settings-item">
                 <button class="settings-item-head" onclick="toggleSettingsItem(this)" aria-expanded="false">
                   <div class="settings-icon"><i data-lucide="globe"></i></div>
@@ -711,7 +741,7 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
                     <div class="settings-row">
                       <div class="settings-check"><svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></div>
                       <div class="settings-row-body">
-                        <div class="settings-row-title">Allow all browser actions</div>
+                        <div class="settings-row-title">Enable computer use</div>
                         <div class="settings-row-desc">מאפשר לקלוד לבצע פעולות בדפדפן בעצמו – קליקים, מילוי טפסים וגלילה, לא רק לצפות.</div>
                       </div>
                     </div>
@@ -1702,7 +1732,7 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
               <div class="step-num-badge">i</div>
               <div class="step-card-body"><p>הסדנה הזו התמקדה בתוצר פשוט, בלי מסד נתונים, בלי פריסה לאינטרנט ובלי חיבורים חיצוניים. כשתרצו לקחת פרויקט צעד קדימה, המדריך הבא מראה איך עושים את זה.</p></div>
             </div>
-            <a href="https://irispelled.github.io/website_builder/" target="_blank" rel="noopener" class="gpt-link-btn"><i data-lucide="external-link"></i> מדריך למתקדמים — מסד נתונים, דיפלוימנט וצ'אטבוט</a>
+            <a href="https://irispelled.github.io/website_builder/" target="_blank" rel="noopener" class="gpt-link-btn"><i data-lucide="external-link"></i> מדריך למתקדמים — בניית אפליקציה עם מסד נתונים, דיפלוימנט וצ'אטבוט</a>
           </div>
         </div>
 
@@ -1720,15 +1750,16 @@ ul.content-list { padding-right:18px; display:flex; flex-direction:column; gap:4
 <!-- ===================== COMPLETION ===================== -->
 <section class="completion" id="completion">
   <div class="logo-bar" style="position:fixed;top:0;left:0;right:0;z-index:500;">
-    <img src="assets/images/LetsAIlogo.svg" alt="Let's AI">
+    <img class="logo-bar-center" src="assets/images/LogoBanner.svg" alt="">
   </div>
+  <video class="completion-video" muted playsinline preload="auto">
+    <source src="assets/videos/finalvideo.mp4" type="video/mp4">
+  </video>
   <div class="completion-content">
-    <div class="completion-icon"><i data-lucide="party-popper" class="icon-xl icon-primary"></i></div>
-    <h2>סיימתם את פלייבוק הסדנה!</h2>
-    <p>עברתם את כל התהליך — מרעיון לתוצר עובד. עכשיו יש לכם תשתית קבועה: CLAUDE.md גלובלי, שיאפשר עבודה רציפה ומעמיקה יותר עם Claude Code גם בפרויקטים הבאים.</p>
     <div class="completion-actions">
       <button class="completion-btn secondary" onclick="restartTutorial()"><i data-lucide="rotate-ccw" class="icon-sm"></i> חזרה להתחלה</button>
     </div>
+    <p class="completion-goodluck"><span class="wave-letter">ב</span><span class="wave-letter">ה</span><span class="wave-letter">צ</span><span class="wave-letter">ל</span><span class="wave-letter">ח</span><span class="wave-letter">ה</span><span class="wave-letter">!</span></p>
   </div>
 </section>
 
@@ -1866,10 +1897,14 @@ function showCompletion() {
   document.getElementById('app').style.display = 'none';
   document.getElementById('bottomNav').style.display = 'none';
   document.getElementById('completion').classList.add('visible');
+  const completionVideo = document.querySelector('.completion-video');
+  completionVideo.currentTime = 0;
+  completionVideo.play();
   lucide.createIcons();
 }
 function restartTutorial() {
   document.getElementById('completion').classList.remove('visible');
+  document.querySelector('.completion-video').pause();
   document.getElementById('app').style.display = 'flex';
   document.getElementById('bottomNav').classList.add('visible');
   currentStep = 1;
